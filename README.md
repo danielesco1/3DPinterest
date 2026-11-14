@@ -25,3 +25,5 @@ python3 -m unittest discover -p "test_*.py"
 ## Notes
 
 - Keep API keys in `.env`. Never commit them.
+
+Write access test: Rebecca
