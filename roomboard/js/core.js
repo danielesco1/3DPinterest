@@ -50,6 +50,7 @@ SPACES.forEach(s=>s.keywords=KW[s.id]||[]);
   set.add(pick(s.h/S>.9||L*S>45?BIG:SMALL));const k=Object.keys(FEAT).find(k=>s.name.toLowerCase().includes(k));if(k)set.add(FEAT[k]);
   if(s.h>4.5)set.add('high ceiling');else if(s.h<2.6)set.add('low ceiling');s.keywords=[...set].slice(0,5)})})();
 const $=(s,el=document)=>el.querySelector(s);
+const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const proj=id=>PROJECTS.find(p=>p.id===id);
 const ALL=()=>SPACES.concat(COMMUNITY);
 const space=id=>ALL().find(s=>s.id===id);
@@ -70,7 +71,7 @@ const dims=s=>UNIT==='m'?`${s.w.toFixed(1)} × ${s.d.toFixed(1)} × ${s.h.toFixe
 const unitWord=()=>UNIT==='m'?'metres':'feet and inches';
 
 /* Filter: type, and long side / short side / height within a tolerance. Long/short ignore orientation. */
-const FILT={type:'all',L:'',S:'',H:'',tol:''};
+const FILT={type:'all',L:'',S:'',H:'',tol:'',q:'',toks:[]};
 let MODE=(()=>{try{return localStorage.getItem('sp-mode')||'images'}catch(e){return 'images'}})();
 const MODES=[['images','Images','<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="6.5" height="9" rx="1"/><rect x="11" y="2.5" width="6.5" height="5" rx="1"/><rect x="2.5" y="13.5" width="6.5" height="4" rx="1"/><rect x="11" y="9.5" width="6.5" height="8" rx="1"/></svg>'],['index','Index','<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 4.5h2M7 4.5h10.5M2.5 10h2M7 10h10.5M2.5 15.5h2M7 15.5h10.5"/></svg>'],['plans','Plans','<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 2.5h15v15h-15zM2.5 10h6M12 10h5.5M10 2.5v4"/><path d="M8.5 10a3.5 3.5 0 0 1 3.5-3.5" stroke-dasharray="1.5 1.5"/></svg>']];
 function setModeAttr(){document.body.dataset.mode=MODE}
@@ -89,10 +90,10 @@ function filterBar(){const u=UNIT==='ft'?'ft':'m',ph=UNIT==='ft'?['20','13','10'
  <button type="button" class="fsz" aria-expanded="false" aria-controls="fpanel" data-active="${sizeActive()}">Size<span class="fsum">${sizeActive()?' · '+sizeSummary():''}</span></button><span class="fcount" aria-live="polite"></span><div class="fmode" role="group" aria-label="View">${MODES.map(([k,l,ic])=>`<button type="button" data-mode="${k}" aria-pressed="${MODE===k}" aria-label="${l} view" title="${l}">${ic}</button>`).join('')}</div></div>
  <div class="fpanel" id="fpanel" hidden>${inp('L','Long side',0)}${inp('S','Short side',1)}${inp('H','Height',2)}${inp('tol','Within ±',3)}
  <div class="ftail"><div class="funit" role="group" aria-label="Units"><button type="button" data-unit="ft" aria-pressed="${UNIT==='ft'}">ft</button><button type="button" data-unit="m" aria-pressed="${UNIT==='m'}">m</button></div><button type="button" class="fclear">Clear size</button></div></div></div>`}
-function filteredFeed(box,base,card,opts={}){const bar=$('#fbar');const F=feed(box,base.filter(matches),card,opts);
+function filteredFeed(box,base,card,opts={}){const bar=$('#fbar'),ok=s=>matches(s)&&(!opts.search||searchMatch(s));const F=feed(box,base.filter(ok),card,opts);
  const count=(n=F.length())=>{bar.querySelector('.fcount').textContent=`${n.toLocaleString()} ${n===1?'space':'spaces'}`;
   const sz=bar.querySelector('.fsz');sz.dataset.active=sizeActive();sz.querySelector('.fsum').textContent=sizeActive()?' · '+sizeSummary():''};
- const apply=()=>{const nl=base.filter(matches);F.set(nl);count(nl.length)};count();
+ const apply=()=>{const nl=base.filter(ok);F.set(nl);count(nl.length)};count();F.apply=apply;
  bar.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
   if(t.dataset.mode){if(t.dataset.mode===MODE)return;MODE=t.dataset.mode;try{localStorage.setItem('sp-mode',MODE)}catch(e){}bar.querySelectorAll('.fmode button').forEach(b=>b.setAttribute('aria-pressed',b===t));F.restyle(()=>setModeAttr())}
   else if(t.dataset.type){FILT.type=t.dataset.type;bar.querySelectorAll('.ft').forEach(b=>b.setAttribute('aria-pressed',b===t));apply()}
@@ -110,7 +111,7 @@ function feed(box,items,card,{batch=8}={}){let list=items,n=0,gen=0,busy=false;
  const io=new IntersectionObserver(e=>{if(e[0].isIntersecting)more()},{rootMargin:'500px'});
  const key=el=>el.dataset&&el.dataset.go;
  const rise=(els)=>els.forEach((el,i)=>anim(el,[{opacity:0,transform:'translateY(18px) scale(.98)'},{opacity:1,transform:'none'}],{duration:420,delay:Math.min(i,10)*40,easing:'cubic-bezier(.2,.8,.2,1)',fill:'backwards'}));
- const endTxt=()=>{sen.textContent=!list.length?'No spaces match. Widen the tolerance or clear the size filter.':n>=list.length?'That’s everything that matches.':''};
+ const endTxt=()=>{sen.textContent=!list.length?'No spaces match. Try fewer keywords, widen the tolerance, or clear the filters.':n>=list.length?'That’s everything that matches.':''};
  function more(){if(busy||!box.isConnected||n>=list.length){endTxt();return}busy=true;const g=gen,k=Math.min(batch,list.length-n),sk=[];
   for(let j=0;j<k;j++){const d=document.createElement('div');d.className='skel';box.append(d);sk.push(d)}
   setTimeout(()=>{sk.forEach(d=>d.remove());busy=false;if(g!==gen||!box.isConnected)return;const start=box.children.length;
@@ -155,7 +156,7 @@ function captureForm(){const u=UNIT==='ft'?'ft':'m',v=x=>UNIT==='ft'?(x*FT).toFi
 <label>Name<input name="name" required placeholder="Corner table, favourite cafe"></label>
 <label>Place<input name="place" placeholder="City"></label>
 <div class="row3"><label>Width (${u})<input name="w" type="number" step=".1" min=".5" value="${v(4)}"></label><label>Depth (${u})<input name="d" type="number" step=".1" min=".5" value="${v(3.5)}"></label><label>Height (${u})<input name="h" type="number" step=".1" min="2" value="${v(2.8)}"></label></div>
-<div class="row3"><label>Door wall<select name="wall"><option>N</option><option>E</option><option selected>S</option><option>W</option></select></label><label>Type<select name="tag"><option>room</option><option>corridor</option><option>threshold</option></select></label><label>Project<select name="project">${PROJECTS.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select></label></div>
+<div class="row3"><label>Door wall<select name="wall"><option>N</option><option>E</option><option selected>S</option><option>W</option></select></label><label>Type<select name="tag"><option>room</option><option>corridor</option><option>threshold</option></select></label><label>Project<select name="project">${PROJECTS.map(p=>`<option value="${p.id}"${p.id===ACTIVE?' selected':''}>${esc(p.name)}</option>`).join('')}</select></label></div>
 <label>Highlights (words from the narration, comma separated)<input name="kw" placeholder="north light, oak floor, quiet"></label>
 <div class="cap-preview" id="capPrev"></div>
 <button type="submit">Save space</button>
@@ -177,7 +178,7 @@ function go(t,push=true,o={}){if(t==='back'){t=STACK.pop()||'feed';push=false}el
  else VIEWS.feed(main);
  if(o.keepPanel&&$('#fpanel')){$('#fpanel').hidden=false;$('.fsz').setAttribute('aria-expanded','true')}
  if(!same)anim(main,[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
- document.querySelectorAll('nav [data-go]').forEach(a=>a.classList.toggle('on',a.dataset.go===t||(v==='v'&&a.dataset.go==='vault')));
+ markNav();if(typeof closeNPop==='function')closeNPop();
  document.querySelectorAll('[data-units]').forEach(el=>el.textContent=unitWord())}
 document.addEventListener('click',e=>{const a=e.target.closest('[data-go]');if(!a)return;e.preventDefault();go(a.dataset.go)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'){const a=e.target.closest&&e.target.closest('[data-go]');if(a&&a.tagName!=='A'&&a.tagName!=='BUTTON'){e.preventDefault();go(a.dataset.go)}}});

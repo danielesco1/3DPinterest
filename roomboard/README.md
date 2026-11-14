@@ -22,11 +22,12 @@ Test on a phone by opening the served address from the same Wi-Fi network.
 
 | Screen | What it does |
 | --- | --- |
-| Inspiration | Endless feed of spaces. Filter by type (room, corridor, threshold) and by size (long side, short side, height, within a tolerance), in feet or metres. Three views: Images (masonry), Index (list), Plans (drawing sheets). |
+| Projects bar | Pills for the projects you choose to show (tick them in the Projects pulldown), plus Create. Tap a pill to make it the active project: the bookmark on any card saves into it. Double-tap a pill to open the project. Vault has its own button in the header. |
+| Find a room | Endless feed of spaces. Search by text, or Browse keywords by category (Light, Materials, Mood, Features, Places) and stack them as tokens. Capture a room from here. Filter by type (room, corridor, threshold) and by size (long side, short side, height, within a tolerance), in feet or metres. Three views: Images (masonry), Index (list), Plans (drawing sheets). |
 | Project | The spaces saved to one project, with the same filter and views. |
 | Space | Photo, measurements, plan, spinning volume, Highlights (keywords from the scan narration), the projects it belongs to, and More like this (similar size or similar feel). |
 | Vault | One card per project with a top-down plan of its current layout. |
-| Project vault | The project's spaces as true-scale 3D volumes. Built-in arrangements (By size, Overlay, By type) plus saved layouts. Drag to move, lift, stack and snap; tap for the space card; double-tap to open the space. |
+| Project vault | The project's spaces as true-scale 3D volumes. Built-in arrangements (By size, Overlay, By type) plus saved layouts. Transparent or Opaque look. Drag to move, Ctrl-drag (or Shift) to lift and stack, drag a corner to rotate (snaps to 90°); tap for the space card; double-tap to open the space. |
 | Capture | Stub form. Type the dimensions the Measure app gives you and the plan draws live. |
 
 ## Files

@@ -11,11 +11,20 @@ function projOf(s){return PROJECTS.find(p=>inBoard(p.id,s.id))||null}
 function projsOf(s){return PROJECTS.filter(p=>inBoard(p.id,s.id))}
 function inAny(id){return PROJECTS.some(p=>inBoard(p.id,id))}
 function addTo(pid,sid){(MEM[pid]||(MEM[pid]=new Set())).add(sid);persistMem()}
-function newProject(name){const id='p'+Date.now().toString(36),p={id,name,note:'',color:PCOLORS[PROJECTS.length%PCOLORS.length]};PROJECTS.push(p);MEM[id]=new Set();persistMem();renderNav();return p}
+/* Projects bar: which projects show as pills (PINNED) and the active one, where saved rooms go (ACTIVE) */
+let PINNED=(()=>{const v=ls.get('rb-pinned',null);return Array.isArray(v)?v.filter(id=>proj(id)):PROJECTS.map(p=>p.id)})();
+let ACTIVE=(()=>{const v=ls.get('rb-active',null);return proj(v)?v:(PROJECTS[0]||{}).id||null})();
+const savePins=()=>{ls.set('rb-pinned',PINNED);ls.set('rb-active',ACTIVE)};
+function newProject(name){const id='p'+Date.now().toString(36),p={id,name,note:'',color:PCOLORS[PROJECTS.length%PCOLORS.length]};PROJECTS.push(p);MEM[id]=new Set();PINNED.push(id);savePins();persistMem();renderNav();return p}
 const BM_ICON='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 3h9v14l-4.5-3.4L5.5 17z"/></svg>';
-const bm=s=>`<span class="bm" role="button" tabindex="0" data-save="${s.id}" aria-pressed="${inAny(s.id)}" aria-haspopup="dialog" aria-label="Save ${s.name} to a project">${BM_ICON}</span>`;
+/* The card bookmark saves straight into the active project; with no active project it opens Save to */
+const bmOn=sid=>ACTIVE&&proj(ACTIVE)?inBoard(ACTIVE,sid):inAny(sid);
+const bmLabel=s=>ACTIVE&&proj(ACTIVE)?`Save ${s.name} to ${proj(ACTIVE).name}`:`Save ${s.name} to a project`;
+const bm=s=>`<span class="bm" role="button" tabindex="0" data-save="${s.id}" aria-pressed="${bmOn(s.id)}" aria-label="${bmLabel(s)}">${BM_ICON}</span>`;
+function refreshBms(){document.querySelectorAll('.bm[data-save]').forEach(el=>{const s=space(el.dataset.save);if(!s)return;el.setAttribute('aria-pressed',bmOn(s.id));el.setAttribute('aria-label',bmLabel(s))})}
+function quickSave(sid){const P=proj(ACTIVE),set=MEM[P.id]||(MEM[P.id]=new Set()),on=!set.has(sid);on?set.add(sid):set.delete(sid);persistMem();refreshSaved(sid);toast(on?`Saved to ${P.name}`:`Removed from ${P.name}`)}
 function toast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.append(t)}t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1800)}
-function refreshSaved(sid){document.querySelectorAll(`[data-save="${sid}"]`).forEach(el=>{el.setAttribute('aria-pressed',inAny(sid));const l=el.querySelector('.s-lbl');if(l)l.textContent=saveLabel(sid)});
+function refreshSaved(sid){document.querySelectorAll(`[data-save="${sid}"]`).forEach(el=>{el.setAttribute('aria-pressed',el.classList.contains('bm')?bmOn(sid):inAny(sid));const l=el.querySelector('.s-lbl');if(l)l.textContent=saveLabel(sid)});
  const pl=$('#inprojects');if(pl&&pl.dataset.sid===sid)pl.innerHTML=projChips(space(sid));renderNav();if(VAULT_API)VAULT_API.sync()}
 const saveLabel=sid=>{const n=projsOf(space(sid)).length;return n?`Saved in ${n} project${n>1?'s':''}`:'Save to project'};
 const projChips=s=>projsOf(s).map(p=>`<button type="button" class="pchip" data-go="p:${p.id}" style="--pc:${p.color}"><i></i>${p.name}</button>`).join('')||'<span class="hl-src">Not in a project yet</span>';
@@ -33,8 +42,8 @@ function openSave(anchor,sid){closeSave();const pop=document.createElement('div'
  pop.addEventListener('submit',e=>{e.preventDefault();const v=pop.querySelector('input').value.trim();if(!v)return;const p=newProject(v);addTo(p.id,sid);draw();refreshSaved(sid);toast(`Created ${p.name} and saved`)});
  pop.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSave();anchor.focus()}});
  setTimeout(()=>document.addEventListener('pointerdown',outside,true));(pop.querySelector('.sp-item')||pop.querySelector('input')).focus({preventScroll:true})}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-save]');if(!b)return;e.preventDefault();e.stopPropagation();if(POP&&POP._sid===b.dataset.save){closeSave();return}openSave(b,b.dataset.save);POP._sid=b.dataset.save},true);
-document.addEventListener('keydown',e=>{const t=e.target;if((e.key==='Enter'||e.key===' ')&&t.dataset&&t.dataset.save&&t.tagName!=='BUTTON'){e.preventDefault();e.stopPropagation();openSave(t,t.dataset.save);POP._sid=t.dataset.save}},true);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-save]');if(!b)return;e.preventDefault();e.stopPropagation();if(b.classList.contains('bm')&&ACTIVE&&proj(ACTIVE)){quickSave(b.dataset.save);return}if(POP&&POP._sid===b.dataset.save){closeSave();return}openSave(b,b.dataset.save);POP._sid=b.dataset.save},true);
+document.addEventListener('keydown',e=>{const t=e.target;if((e.key==='Enter'||e.key===' ')&&t.dataset&&t.dataset.save&&t.tagName!=='BUTTON'){e.preventDefault();e.stopPropagation();if(t.classList.contains('bm')&&ACTIVE&&proj(ACTIVE)){quickSave(t.dataset.save);return}openSave(t,t.dataset.save);POP._sid=t.dataset.save}},true);
 addEventListener('scroll',()=>{if(POP)closeSave()},{passive:true});
 
 const THREE_URL='https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';
@@ -49,7 +58,8 @@ const BUILTIN=[['size','By size'],['overlay','Overlay'],['type','By type']];
 const nextLayoutName=pid=>{const ns=new Set(vl(pid).custom.map(l=>l.name));let i=1;while(ns.has('Layout '+i))i++;return 'Layout '+i};
 const layoutName=(pid,id)=>{const b=BUILTIN.find(x=>x[0]===id);return b?b[1]:((vl(pid).custom.find(l=>l.id===id)||{}).name||'Layout')};
 function layoutPos(pid){const st=vl(pid),items=inProject(pid),c=st.custom.find(l=>l.id===st.active),auto=arrange(items,c?'size':st.active);if(!c)return auto;const out={};items.forEach(s=>out[s.id]=c.pos[s.id]||auto[s.id]);return out}
-let VAULT_API=null,VMOVE='across';const VCAMS={};
+let VAULT_API=null,VMOVE='across',VLOOK=ls.get('rb-look','glass');const VCAMS={};
+const ROT_ICON='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 8.5A6 6 0 0 0 4.6 7M4.5 11.5A6 6 0 0 0 15.4 13"/><path d="M4.2 3.6l.4 3.6 3.5-.6M15.8 16.4l-.4-3.6-3.5.6"/></svg>';
 const fp=(s,r)=>r%2?[s.d,s.w]:[s.w,s.d];
 function arrange(items,kind){const out={};
  if(kind==='overlay'){items.forEach(s=>{const r=s.d>s.w?1:0,[lx,lz]=fp(s,r);out[s.id]={x:lx/2,z:-lz/2,r}});return out}
@@ -78,7 +88,11 @@ async function mountVault(stage,ui,pid){const P=proj(pid);
  const fg=C('--fg','#222'),acc=C('--accent','#c00');
  const person=new T.Group();const pm=new T.MeshLambertMaterial({color:fg});
  const body=new T.Mesh(new T.CylinderGeometry(.19,.16,1.42,16),pm);body.position.y=.71;const head=new T.Mesh(new T.SphereGeometry(.12,16,12),pm);head.position.y=1.61;person.add(body,head);scene.add(person);
- const groups=new Map(),meshes=[];let sel=null,drag=null,tween=null,raf=0,lastTap={id:null,t:0},partners=[];
+ const groups=new Map(),meshes=[];let sel=null,drag=null,rot=null,tween=null,raf=0,lastTap={id:null,t:0},partners=[];
+ /* Look: transparent glass volumes, or opaque solids */
+ const WHITE=new T.Color(0xffffff);
+ const paint=o=>{const on=o.s.id===sel;if(VLOOK==='solid'){o.mat.transparent=false;o.mat.opacity=1;o.mat.depthWrite=true;o.mat.color.copy(o.solidCol);o.foot.visible=false}
+  else{o.mat.transparent=true;o.mat.opacity=on?.5:.28;o.mat.depthWrite=false;o.mat.color.copy(o.col);o.foot.visible=true}o.mat.needsUpdate=true};
  function makeVolume(s){const col=new T.Color(s.tag==='room'?P.color:TAGCOL[s.tag]),g=new T.Group();
   const geo=new T.BoxGeometry(s.w,s.h,s.d);geo.translate(0,s.h/2,0);
   const mat=new T.MeshLambertMaterial({color:col,transparent:true,opacity:.28,depthWrite:false});const mesh=new T.Mesh(geo,mat);
@@ -93,7 +107,7 @@ async function mountVault(stage,ui,pid){const P=proj(pid);
   const drop=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(0,0,0),new T.Vector3(0,1,0)]),new T.LineDashedMaterial({color:fg,dashSize:.15,gapSize:.1}));drop.visible=false;scene.add(drop);
   mesh.userData.id=s.id;meshes.push(mesh);
   const lab=document.createElement('div');lab.className='vlabel';lab.innerHTML=`<b>${s.name}</b><span>${len(Math.max(s.w,s.d))} × ${len(Math.min(s.w,s.d))} · H ${len(s.h)}</span>`;labels.append(lab);
-  const o={s,g,mesh,edges,mat,col,lab,sh,drop,r:0};groups.set(s.id,o);scene.add(g);return o}
+  const o={s,g,mesh,edges,mat,col,lab,sh,drop,foot,solidCol:col.clone().lerp(WHITE,.35),r:0};paint(o);groups.set(s.id,o);scene.add(g);return o}
  const bb=(o,x=o.g.position.x,z=o.g.position.z,y=o.g.position.y)=>{const [lx,lz]=fp(o.s,o.r);return {x0:x-lx/2,x1:x+lx/2,z0:z-lz/2,z1:z+lz/2,y0:y,y1:y+o.s.h}};
  function place(o,p,instant){o.r=p.r||0;if(instant){o.g.position.set(p.x,p.y||0,p.z);o.g.rotation.y=-o.r*Math.PI/2}}
  const currentLayout=()=>layoutPos(pid);
@@ -104,22 +118,43 @@ async function mountVault(stage,ui,pid){const P=proj(pid);
   if(instant||RM){camera.position.copy(to);controls.target.copy(tg);return}
   const fromP=camera.position.clone(),fromT=controls.target.clone(),t0=performance.now();
   (function stepCam(){const k=Math.min(1,(performance.now()-t0)/700),e=1-Math.pow(1-k,3);camera.position.lerpVectors(fromP,to,e);controls.target.lerpVectors(fromT,tg,e);if(k<1)requestAnimationFrame(stepCam)})()}
- function moveTo(lay,ms=700){const t0=performance.now(),from=new Map();groups.forEach((o,id)=>{const p=lay[id];if(!p)return;from.set(id,{x:o.g.position.x,y:o.g.position.y,z:o.g.position.z,a:o.g.rotation.y,tx:p.x,ty:p.y||0,tz:p.z,ta:-(p.r||0)*Math.PI/2});o.r=p.r||0});
+ /* turn the short way round to the target quarter turn */
+ const nearAngle=(a,t)=>a+((((t-a)%(2*Math.PI))+3*Math.PI)%(2*Math.PI)-Math.PI);
+ function moveTo(lay,ms=700){const t0=performance.now(),from=new Map();groups.forEach((o,id)=>{const p=lay[id];if(!p)return;const a=o.g.rotation.y;from.set(id,{x:o.g.position.x,y:o.g.position.y,z:o.g.position.z,a,tx:p.x,ty:p.y||0,tz:p.z,ta:nearAngle(a,-(p.r||0)*Math.PI/2)});o.r=p.r||0});
   tween=()=>{const k=RM?1:Math.min(1,(performance.now()-t0)/ms),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
    from.forEach((f,id)=>{const g=groups.get(id).g;g.position.x=f.x+(f.tx-f.x)*e;g.position.y=f.y+(f.ty-f.y)*e;g.position.z=f.z+(f.tz-f.z)*e;g.rotation.y=f.a+(f.ta-f.a)*e});if(k>=1)tween=null}}
  const setPartners=list=>{partners.forEach(o=>{if(o.s.id!==sel)o.edges.material.color.copy(o.col)});partners=list;partners.forEach(o=>o.edges.material.color.copy(acc))};
- function select(id){if(sel){const o=groups.get(sel);if(o){o.edges.material.color.copy(o.col);o.mat.opacity=.28;o.lab.classList.remove('on')}}
-  sel=id&&groups.has(id)?id:null;if(sel){const o=groups.get(sel);o.edges.material.color.copy(fg);o.mat.opacity=.5;o.lab.classList.add('on')}ui.select(sel?groups.get(sel).s:null,sel?groups.get(sel).g.position.y:0)}
+ function select(id){const prev=sel;sel=id&&groups.has(id)?id:null;if(prev){const o=groups.get(prev);if(o){o.edges.material.color.copy(o.col);o.lab.classList.remove('on');paint(o)}}
+  if(sel){const o=groups.get(sel);o.edges.material.color.copy(fg);o.lab.classList.add('on');paint(o)}ui.select(sel?groups.get(sel).s:null,sel?groups.get(sel).g.position.y:0)}
  function sync(){const items=inProject(pid),ids=new Set(items.map(s=>s.id));
   groups.forEach((o,id)=>{if(!ids.has(id)){scene.remove(o.g,o.sh,o.drop);o.lab.remove();meshes.splice(meshes.indexOf(o.mesh),1);groups.delete(id);if(sel===id)select(null)}});
   items.forEach(s=>{if(!groups.has(s.id)){const o=makeVolume(s),lay=currentLayout();place(o,lay[s.id],true)}});ui.count(items.length)}
  inProject(pid).forEach(makeVolume);const lay0=currentLayout();groups.forEach((o,id)=>place(o,lay0[id],true));
- /* pointer: drag volumes across the floor or up/down (Shift flips), tap to select, double-tap to open */
- const ray=new T.Raycaster(),ndc=new T.Vector2(),hit=new T.Vector3();
+ /* pointer: drag volumes across the floor or up/down (Ctrl or Shift flips), drag a corner to rotate, tap to select, double-tap to open */
+ const ray=new T.Raycaster(),ndc=new T.Vector2(),hit=new T.Vector3(),cv=new T.Vector3();
  const setNdc=e=>{const r=renderer.domElement.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera)};
  let downAt=null;const SNAP=.35,snap=v=>Math.round(v/.1)*.1;
- const onDown=e=>{if(e.button>0||e.target.closest('.vcard'))return;downAt=[e.clientX,e.clientY];setNdc(e);const h=ray.intersectObjects(meshes,false)[0];if(!h)return;
-  e.stopPropagation();const o=groups.get(h.object.userData.id),vertical=(VMOVE==='up')!==!!e.shiftKey;tween=null;
+ /* Corner handles, like a gumball: the nearest top or bottom corner of any volume within px of the pointer */
+ const rotH=document.createElement('div');rotH.className='vrot';rotH.hidden=true;rotH.innerHTML=ROT_ICON+'<span></span>';stage.append(rotH);
+ function cornerAt(cx,cy,px){const r=renderer.domElement.getBoundingClientRect(),mx=cx-r.left,my=cy-r.top;let best=null;
+  groups.forEach(o=>{const [lx,lz]=fp(o.s,o.r),p=o.g.position;for(const y of [p.y,p.y+o.s.h])for(const [sx,sz] of [[-1,-1],[1,-1],[1,1],[-1,1]]){
+   cv.set(p.x+sx*lx/2,y,p.z+sz*lz/2).project(camera);if(cv.z>1)continue;const X=(cv.x+1)/2*r.width,Y=(1-cv.y)/2*r.height,d=Math.hypot(X-mx,Y-my);if(d<px&&(!best||d<best.d))best={o,d,X,Y,y}}});return best}
+ const showRot=(x,y,txt='')=>{rotH.hidden=false;rotH.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-50%)`;rotH.querySelector('span').textContent=txt;rotH.classList.toggle('deg',!!txt)};
+ const hideRot=()=>{rotH.hidden=true;stage.classList.remove('rothot')};
+ const onHover=e=>{if(drag||rot||e.pointerType!=='mouse'||e.buttons)return;const c=cornerAt(e.clientX,e.clientY,12);if(c){showRot(c.X,c.Y);stage.classList.add('rothot')}else hideRot()};
+ const degOf=th=>{const d=Math.round(((-th*180/Math.PI)%360+360)%360);return d===360?0:d};
+ const onRot=e=>{if(!rot)return;setNdc(e);if(!ray.ray.intersectPlane(rot.plane,hit))return;const o=rot.o,a=Math.atan2(hit.z-o.g.position.z,hit.x-o.g.position.x);
+  let th=rot.base-(a-rot.a0);const q=Math.PI/2,near=Math.round(th/q)*q;if(Math.abs(th-near)<Math.PI/18)th=near;o.g.rotation.y=th;
+  const r=renderer.domElement.getBoundingClientRect();showRot(e.clientX-r.left,e.clientY-r.top,degOf(th)+'°')};
+ const onRotUp=()=>{window.removeEventListener('pointermove',onRot);stage.classList.remove('rotating');hideRot();if(!rot)return;const o=rot.o,q=Math.PI/2,k=Math.round(-o.g.rotation.y/q),r=((k%4)+4)%4,changed=r!==rot.r0;rot=null;
+  const lay={};groups.forEach((x,id)=>lay[id]={x:x.g.position.x,y:x.g.position.y,z:x.g.position.z,r:id===o.s.id?r:x.r});moveTo(lay,220);setTimeout(()=>{if(changed)commitCustom()},240)};
+ const onDown=e=>{if(e.button>0||e.target.closest('.vcard'))return;downAt=[e.clientX,e.clientY];setNdc(e);
+  const c=cornerAt(e.clientX,e.clientY,e.pointerType==='mouse'?12:22);
+  if(c){e.stopPropagation();tween=null;const o=c.o;select(o.s.id);const plane=new T.Plane(new T.Vector3(0,1,0),-c.y);ray.ray.intersectPlane(plane,hit);
+   rot={o,plane,a0:Math.atan2(hit.z-o.g.position.z,hit.x-o.g.position.x),base:o.g.rotation.y,r0:o.r};stage.classList.add('rotating');showRot(c.X,c.Y,degOf(o.g.rotation.y)+'°');
+   window.addEventListener('pointermove',onRot);window.addEventListener('pointerup',onRotUp,{once:true});return}
+  const h=ray.intersectObjects(meshes,false)[0];if(!h)return;
+  e.stopPropagation();const o=groups.get(h.object.userData.id),vertical=(VMOVE==='up')!==!!(e.shiftKey||e.ctrlKey||e.metaKey);tween=null;
   let plane;if(vertical){const n=new T.Vector3();camera.getWorldDirection(n);n.y=0;if(n.lengthSq()<1e-6)n.set(0,0,1);n.normalize().negate();plane=new T.Plane().setFromNormalAndCoplanarPoint(n,o.g.position.clone())}
   else plane=new T.Plane(new T.Vector3(0,1,0),-o.g.position.y);
   ray.ray.intersectPlane(plane,hit);drag={o,plane,vertical,dx:o.g.position.x-hit.x,dy:o.g.position.y-hit.y,dz:o.g.position.z-hit.z,moved:false,x:e.clientX,y:e.clientY};
@@ -145,6 +180,7 @@ async function mountVault(stage,ui,pid){const P=proj(pid);
  const snapshot=()=>{const pos={};groups.forEach((o,id)=>pos[id]={x:+o.g.position.x.toFixed(2),y:+o.g.position.y.toFixed(2),z:+o.g.position.z.toFixed(2),r:o.r});return pos};
  function commitCustom(){const st=vl(pid),c=st.custom.find(l=>l.id===st.active);if(c)c.pos=snapshot();else{const n={id:'l'+Date.now().toString(36),name:nextLayoutName(pid),pos:snapshot()};st.custom.push(n);st.active=n.id;toast(`Saved as ${n.name}`)}saveVL();ui.layouts()}
  stage.addEventListener('pointerdown',onDown,true);stage.addEventListener('pointerup',onClickEmpty);
+ stage.addEventListener('pointermove',onHover);stage.addEventListener('pointerleave',()=>{if(!rot)hideRot()});stage.addEventListener('contextmenu',e=>e.preventDefault());
  const ro=new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix()});ro.observe(stage);
  const v=new T.Vector3();
  function loop(){raf=requestAnimationFrame(loop);if(tween)tween();controls.update();
@@ -164,12 +200,13 @@ async function mountVault(stage,ui,pid){const P=proj(pid);
  loop();anim(renderer.domElement,[{opacity:0},{opacity:1}],{duration:500});
  ui.count(groups.size);if(VC&&VC.sel&&groups.has(VC.sel))select(VC.sel);
  return {sync,
+  look(){groups.forEach(paint)},
   arrange(id){vl(pid).active=id;saveVL();ui.layouts();moveTo(currentLayout());setTimeout(()=>frame(),RM?0:720)},
   newLayout(){const st=vl(pid),n={id:'l'+Date.now().toString(36),name:nextLayoutName(pid),pos:snapshot()};st.custom.push(n);st.active=n.id;saveVL();ui.layouts();toast(`Saved ${n.name}`)},
   rotate(){if(!sel)return;const o=groups.get(sel),r=(o.r+1)%4;tween=null;const lay={};groups.forEach((x,id)=>lay[id]={x:x.g.position.x,y:x.g.position.y,z:x.g.position.z,r:id===sel?r:x.r});moveTo(lay,420);setTimeout(commitCustom,440)},
   floor(){if(!sel)return;const lay={};groups.forEach((x,id)=>lay[id]={x:x.g.position.x,y:id===sel?0:x.g.position.y,z:x.g.position.z,r:x.r});moveTo(lay,420);setTimeout(()=>{commitCustom();ui.lift(groups.get(sel).s,0)},440)},
   frame:()=>frame(),select,
-  stop(){VCAMS[pid]={p:camera.position.toArray(),t:controls.target.toArray(),sel};cancelAnimationFrame(raf);ro.disconnect();window.removeEventListener('pointermove',onMove);controls.dispose();renderer.dispose();VAULT_API=null}}}
+  stop(){VCAMS[pid]={p:camera.position.toArray(),t:controls.target.toArray(),sel};cancelAnimationFrame(raf);ro.disconnect();window.removeEventListener('pointermove',onMove);window.removeEventListener('pointermove',onRot);controls.dispose();renderer.dispose();VAULT_API=null}}}
 
 
 function vaultView(m){m.innerHTML=`<p class="intro">Vault</p><p class="lede">Every project as true-scale volumes. Open one to arrange its spaces in 3D, try the built-in arrangements, or save your own layouts.</p>
@@ -181,11 +218,12 @@ function vaultView(m){m.innerHTML=`<p class="intro">Vault</p><p class="lede">Eve
  $('#vnew').addEventListener('submit',e=>{e.preventDefault();const v=$('#vnew-name').value.trim();if(!v)return;const p=newProject(v);toast(`Created ${p.name}`);go('vault',false)})}
 
 function vaultProjectView(m,P){const pid=P.id,items=inProject(pid),unitGrid=UNIT==='ft'?'5 ft':'1 m';
- m.innerHTML=`<button class="back" data-go="vault">← All projects</button><p class="intro"><span class="pdot" style="background:${P.color}"></span>${P.name}</p><p class="lede">${items.length} spaces · ${totalArea(items)}. Drag to move or stack, switch layouts, or save a new one. Moving anything on a built-in arrangement saves it as a new layout.</p>
+ m.innerHTML=`<button class="back" data-go="vault">← All projects</button><p class="intro"><span class="pdot" style="background:${P.color}"></span>${esc(P.name)}</p><p class="lede">${items.length} spaces · ${totalArea(items)}. Drag to move, hold Ctrl and drag to lift or stack, and drag a corner to rotate. Moving anything on a built-in arrangement saves it as a new layout.</p>
  <div class="vtools"><div class="vseg vlays" role="group" aria-label="Layouts" id="vlays"></div><span class="vlay-acts" id="vlayacts"></span>
  <div class="vseg" role="group" aria-label="Drag moves"><span class="vseg-l">Drag moves</span>${[['across','Across'],['up','Up / down']].map(([k,l])=>`<button type="button" data-move="${k}" aria-pressed="${VMOVE===k}">${l}</button>`).join('')}</div>
+ <div class="vseg" role="group" aria-label="Look"><span class="vseg-l">Look</span>${[['glass','Transparent'],['solid','Opaque']].map(([k,l])=>`<button type="button" data-look="${k}" aria-pressed="${VLOOK===k}">${l}</button>`).join('')}</div>
  <button type="button" class="vbtn" data-vact="frame">Reset view</button></div>
- <div class="vstage" id="vstage"><div class="vcard" id="vsel" hidden></div><div class="vhint">Tap a volume for its space · double-tap to open it · drag to move · Shift-drag lifts</div></div>
+ <div class="vstage" id="vstage"><div class="vcard" id="vsel" hidden></div><div class="vhint">Tap a volume for its space · double-tap to open · drag to move · Ctrl-drag lifts · drag a corner to rotate</div></div>
  <div class="vfoot"><div class="vlegend"><span><i style="background:${P.color}"></i>Room</span><span><i style="background:${TAGCOL.corridor}"></i>Corridor</span><span><i style="background:${TAGCOL.threshold}"></i>Threshold</span><span><i class="door"></i>Doors</span></div><span class="vnote"><span id="vcount">${items.length}</span> volumes · grid ${unitGrid} · figure 1.75 m</span></div>`;
  const lays=$('#vlays'),acts=$('#vlayacts'),card=$('#vsel'),hint=m.querySelector('.vhint');let confirmDel=false;
  const ui={count:n=>{const c=$('#vcount');if(c)c.textContent=n},
@@ -201,6 +239,7 @@ function vaultProjectView(m,P){const pid=P.id,items=inProject(pid),unitGrid=UNIT
  if(!items.length){$('#vstage').insertAdjacentHTML('afterbegin',`<div class="vmsg">No spaces in ${P.name} yet. Tap the bookmark on any space and save it here.</div>`);return}
  m.querySelector('.vtools').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.move){VMOVE=b.dataset.move;m.querySelectorAll('[data-move]').forEach(x=>x.setAttribute('aria-pressed',x===b));return}
+  if(b.dataset.look){VLOOK=b.dataset.look;ls.set('rb-look',VLOOK);m.querySelectorAll('[data-look]').forEach(x=>x.setAttribute('aria-pressed',x===b));if(VAULT_API)VAULT_API.look();return}
   if(!VAULT_API)return;const a=b.dataset.vact,st=vl(pid);
   if(b.dataset.lay){if(b.dataset.lay!==st.active)VAULT_API.arrange(b.dataset.lay)}
   else if(a==='frame')VAULT_API.frame();
@@ -233,6 +272,10 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .vnote{font:12px var(--font-data);color:var(--muted)}
 .vstage{position:relative;height:clamp(420px,66vh,740px);border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);overflow:hidden;touch-action:none;cursor:grab}
 .vstage.dragging{cursor:grabbing}
+.vstage.rothot,.vstage.rotating{cursor:alias}
+.vrot{position:absolute;left:0;top:0;z-index:2;display:flex;align-items:center;gap:4px;height:28px;min-width:28px;padding:0 5px;border-radius:999px;background:var(--surface);color:var(--fg);border:1.5px solid var(--fg);box-shadow:0 2px 8px rgba(0,0,0,.2);pointer-events:none;font:600 11px var(--font-data);font-variant-numeric:tabular-nums}
+.vrot svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.vrot span:empty{display:none}.vrot.deg{background:var(--fg);color:var(--bg)}
 .vstage canvas{display:block;width:100%;height:100%}
 .vmsg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);font:14px var(--font-body)}
 .vlabels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
