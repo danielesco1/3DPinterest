@@ -67,6 +67,8 @@ const m=len;
 const area=s=>UNIT==='m'?(s.w*s.d).toFixed(1)+' m²':Math.round(s.w*s.d*FT*FT).toLocaleString()+' ft²';
 const totalArea=ss=>{const a=ss.reduce((x,s)=>x+s.w*s.d,0);return UNIT==='m'?a.toFixed(0)+' m²':Math.round(a*FT*FT).toLocaleString()+' ft²'};
 const volume=s=>UNIT==='m'?(s.w*s.d*s.h).toFixed(0)+' m³':Math.round(s.w*s.d*s.h*FT**3).toLocaleString()+' ft³';
+/* Scanned rooms are uncalibrated: mark their measurements as estimates. Sample rooms are unchanged. */
+const est=s=>s.scanned&&s.calibrated===false?' <span class="est" style="color:var(--muted);font-size:.85em" title="Estimated from the 3D scan, not measured">est.</span>':'';
 const dims=s=>UNIT==='m'?`${s.w.toFixed(1)} × ${s.d.toFixed(1)} × ${s.h.toFixed(1)} m`:`${len(s.w)} × ${len(s.d)} × ${len(s.h)}`;
 const unitWord=()=>UNIT==='m'?'metres':'feet and inches';
 
