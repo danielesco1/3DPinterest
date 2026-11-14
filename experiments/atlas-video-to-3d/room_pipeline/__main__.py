@@ -20,6 +20,9 @@ def main():
     p.add_argument('--allow-paid',action='store_true'); p.add_argument('--max-credits',type=int,default=0)
     p.add_argument('--pose-reviewed',action='store_true'); p.add_argument('--grid',nargs=2,type=int,default=[720,1280])
     p.add_argument('--viewer-vendor',type=Path)
+    p.add_argument('--astra',action='store_true',help='Prepare Atlas evidence for an Astra agent; stop for review')
+    p.add_argument('--astra-command',help='JSON argv array for an authorized local agent bridge')
+    p.add_argument('--allow-agent',action='store_true',help='Authorize configured bridge invocation; may transmit data or spend credits')
     p.add_argument('--cad-evidence',type=Path); p.add_argument('--package',action='store_true')
     p.add_argument('--drive-root'); p.add_argument('--allow-drive-upload',action='store_true')
     a=p.parse_args()
@@ -44,6 +47,12 @@ def main():
                 result=adapter.run(media,a.grid,a.pose_reviewed)
                 print(result['status'])
                 if result['status']!='complete': return
+            if a.astra:
+                import json
+                from .astra import propose
+                result=propose(root,a.take,json.loads(a.astra_command) if a.astra_command else None,a.allow_agent)
+                print('Astra: '+result['status'])
+                if not a.cad_evidence: return
             if a.cad_evidence:
                 run_cad_stage(a.cad_evidence,root,a.take)
             if a.viewer_vendor:

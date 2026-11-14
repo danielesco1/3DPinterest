@@ -4,9 +4,10 @@
 JSON, OBJ polygon faces, plan/volume SVG and DXF. Supports simple concave and
 nonorthogonal floor polygons, vertical walls and a flat ceiling.
 
-This is not automatic Astra inference. First-room prototypes use manual patches
-and plane selection, and are never silently applied to another video. Astra or
-plane proposals must provide reviewed evidence; until then CAD is needs_review.
+Use `--astra` to prepare the Atlas-based agent request described in
+`ASTRA_STAGE.md`. Inference requires an authorized agent bridge; it is not a
+built-in API call. First-room manual patches are never silently applied to
+another video. Astra proposals remain needs_review until a person checks them.
 
 ## Schema version 1
 
