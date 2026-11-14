@@ -8,16 +8,25 @@ from .core import read, write, sha256
 
 def align(media, transcript):
     frames=media['frames']; result=[]
+    offset=float(media['audio_offset_seconds'])
+    if not math.isfinite(offset): raise ValueError('Invalid audio/video timing offset')
     for i,s in enumerate(transcript.get('segments',[])):
         start,end=float(s['start']),float(s['end'])
-        if not all(math.isfinite(t) for t in (start,end)) or not 0<=start<=end<=media['duration_seconds']+1:
-            raise ValueError('Transcript segment outside video duration')
-        nearest=min(frames,key=lambda f:abs(f['timestamp_seconds']-(start+end)/2)) if frames else None
+        if not all(math.isfinite(t) for t in (start,end)) or not 0<=start<=end<=media.get('audio_duration_seconds',media['duration_seconds'])+1:
+            raise ValueError('Transcript segment outside audio duration')
+        audio_start,audio_end=start,end
+        start,end=start+offset,end+offset
+        overlaps=end>=0 and start<=media['duration_seconds']
+        midpoint=(max(0,start)+min(media['duration_seconds'],end))/2
+        nearest=min(frames,key=lambda f:abs(f['timestamp_seconds']-midpoint)) if frames and overlaps else None
+        words=[dict(w,audio_start_seconds=w['start'],audio_end_seconds=w['end'],
+                    start=float(w['start'])+offset,end=float(w['end'])+offset) for w in s.get('words',[])]
         result.append({'id':f'observation-{i:04d}','start_seconds':start,'end_seconds':end,
-                       'text':s['text'],'words':s.get('words',[]),'review_status':'unreviewed',
+                       'audio_start_seconds':audio_start,'audio_end_seconds':audio_end,
+                       'text':s['text'],'words':words,'review_status':'unreviewed',
                        'candidate_frame_id':nearest['id'] if nearest else None,
                        'spatial_anchor':None,'spatial_status':'unlocalized'})
-    return {'schema_version':1,'source_video_sha256':media['source']['sha256'],
+    return {'schema_version':1,'source_video_sha256':media['source']['sha256'],'audio_offset_seconds':offset,
             'limitations':['Temporal association identifies a camera view, not the object described.','Transcription requires human review.'],
             'observations':result}
 
@@ -31,7 +40,7 @@ def transcribe(root, media, python, model='base', model_dir=None, language=None)
     if not (cache/(model+'.pt')).is_file():
         raise FileNotFoundError('Whisper model weights must be installed locally first')
     audio=root/'media'/media['audio']
-    identity={'audio_sha256':sha256(audio),'model':model,'language':language}
+    identity={'audio_sha256':sha256(audio),'model':model,'language':language,'audio_offset_seconds':media['audio_offset_seconds']}
     dest=root/'transcription'; checkpoint=dest/'checkpoint.json'
     if checkpoint.exists():
         state=read(checkpoint)

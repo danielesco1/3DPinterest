@@ -39,9 +39,19 @@ def _extract(video, output, interval=1.0, max_frames=60):
              'timestamp_seconds':pts[n]-pts[0],'source_pts_seconds':pts[n],
              'sha256':sha256(output/f'frame-{i:04d}.jpg')} for i,n in enumerate(candidates,1)]
     audio=any(s['codec_type']=='audio' for s in probe['streams'])
-    if audio: command(['ffmpeg','-v','error','-nostdin','-i',str(video),'-vn','-ac','1','-ar','16000',str(output/'audio.wav')])
+    audio_start=None; audio_duration=None
+    if audio:
+        audio_probe=json.loads(command(['ffprobe','-v','error','-select_streams','a:0','-show_frames','-show_entries','frame=best_effort_timestamp_time,nb_samples,sample_rate','-of','json',str(video)]))
+        audio_frames=audio_probe['frames']
+        if not audio_frames: raise ValueError('Audio has no decoded frames')
+        audio_start=float(audio_frames[0]['best_effort_timestamp_time'])
+        if not math.isfinite(audio_start): raise ValueError('Invalid audio start timestamp')
+        # WAV zero is the first decoded audio sample, not the first video frame.
+        command(['ffmpeg','-v','error','-nostdin','-i',str(video),'-map','0:a:0','-vn','-af','asetpts=PTS-STARTPTS','-ac','1','-ar','16000',str(output/'audio.wav')])
+        audio_duration=float(json.loads(command(['ffprobe','-v','error','-show_format','-of','json',str(output/'audio.wav')]))['format']['duration'])
     result={'schema_version':1,'source':signature,'frames':frames,'audio':'audio.wav' if audio else None,
             'duration_seconds':float(probe['format']['duration']),'timestamp_origin_source_pts':pts[0],
+            'audio_duration_seconds':audio_duration,'audio_start_source_pts':audio_start,'audio_offset_seconds':audio_start-pts[0] if audio else None,
             'review_status':'unreviewed','sampling':'uniform temporal sampling, not image-quality selection'}
     write(manifest,result)
     return result

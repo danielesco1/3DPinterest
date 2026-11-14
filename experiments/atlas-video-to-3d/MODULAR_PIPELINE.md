@@ -51,3 +51,5 @@ python3 -m unittest discover -p 'test_*.py'
 ```
 
 Core and publisher tests are offline/mocked. A synthetic-video extraction/resume/package smoke test passed. Live paid Atlas, automatic Astra, live Whisper inference, Drive token upload and end-to-end reconstruction quality have not been tested through this new runner.
+
+Audio alignment records the first decoded audio PTS relative to the first decoded video PTS. Segment and word times are shifted onto that video timeline; speech outside the video interval has no candidate frame. Original audio-relative times remain available. Earlier runs without timing-offset metadata must use a fresh take revision before transcription.
