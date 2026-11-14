@@ -24,6 +24,12 @@ class AstraTests(unittest.TestCase):
     def tearDown(self): self.t.cleanup()
     def test_prepare_no_invocation(self):
         self.assertEqual(propose(self.root,'take')['status'],'agent_required')
+    def test_camera_metadata_inventory(self):
+        write(self.root/'atlas/pose-operation.json',{'response':{'frames':[]}})
+        write(self.root/'atlas/frame-map.json',{'frames':[]})
+        paths={a['path'] for a in prepare_request(self.root,'take')['artifacts']}
+        self.assertIn('atlas/pose-operation.json',paths)
+        self.assertIn('atlas/frame-map.json',paths)
     def test_missing_atlas(self):
         with self.assertRaises(ValueError): prepare_request(self.root/'empty','take')
     def test_concave_proposal(self): validate_proposal(proposal(),prepare_request(self.root,'take'))

@@ -56,6 +56,10 @@ def prepare_request(root, take_id):
                 with zipfile.ZipFile(p) as z:
                     item['members']=[i.filename for i in z.infolist() if not i.is_dir()]
             artifacts.append(item)
+    for name in ('atlas/pose-operation.json','atlas/frame-map.json'):
+        p=root/name
+        if p.is_file() and not p.is_symlink():
+            artifacts.append({'path':name,'sha256':sha256(p),'bytes':p.stat().st_size})
     if not any(a['path'].startswith('atlas/pose/') for a in artifacts):
         raise ValueError('Atlas pose/RGBD outputs required before Astra')
     return {'schema_version':1,'source_take_id':take_id,'instructions':INSTRUCTIONS,
