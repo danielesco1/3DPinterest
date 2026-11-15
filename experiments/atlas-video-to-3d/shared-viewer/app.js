@@ -40,13 +40,13 @@ if(surface){
       triangles.push(...point);
     }
   }
-  $('geometryNotes').textContent=coreData.surface_mesh_notes||
+  $('geometryNotes').textContent=coreData.surface_mesh_notes||surface.status||
     'Provisional surface mesh with inferred opening cuts. Core envelope still controls display crop. Dimensions remain uncalibrated; no survey accuracy is claimed.';
 }else{
   for(const face of coreData.faces)for(let i=1;i<face.length-1;i++)
     triangles.push(...coreData.vertices[face[0]],...coreData.vertices[face[i]],...coreData.vertices[face[i+1]]);
 }
-const faceGeo=new THREE.BufferGeometry();faceGeo.setAttribute('position',new THREE.Float32BufferAttribute(triangles,3));const coreFaces=new THREE.Mesh(faceGeo,new THREE.MeshBasicMaterial({color:0x78bbdf,transparent:true,opacity:.08,side:THREE.DoubleSide,depthWrite:false,depthTest:false}));coreGroup.add(coreFaces);$('core').onchange=e=>coreGroup.visible=e.target.checked;$('coreFaces').onchange=e=>coreFaces.visible=e.target.checked;
+const faceGeo=new THREE.BufferGeometry();faceGeo.setAttribute('position',new THREE.Float32BufferAttribute(triangles,3));const coreFaces=new THREE.Mesh(faceGeo,new THREE.MeshBasicMaterial({color:0x78bbdf,transparent:true,opacity:surface ? .35 : .08,side:THREE.DoubleSide,depthWrite:false,depthTest:false}));coreGroup.add(coreFaces);$('core').onchange=e=>coreGroup.visible=e.target.checked;$('coreFaces').onchange=e=>coreFaces.visible=e.target.checked;
 
 
 // Restore the previous room-plus-margin filter. The Hotel envelope is not
