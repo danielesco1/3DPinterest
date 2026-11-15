@@ -10,8 +10,10 @@ function loadRooms(){
    .then(([sp,tg])=>sp&&{...sp,anchors:(tg&&tg.anchors)||[]}))))
   .then(list=>{list.filter(Boolean).forEach(s=>{
     if(SPACES.some(x=>x.id===s.id))return;
-    SPACES.unshift({...s,scanned:true,thumb:s.thumb?ROOMS_URL+s.id+'/'+s.thumb:null,saved:s.saved||'Scanned',keywords:s.keywords||[],
+    SPACES.unshift({...s,scanned:true,thumb:s.thumb?(/^https:\/\//.test(s.thumb)?s.thumb:ROOMS_URL+s.id+'/'+s.thumb):null,saved:s.saved||'Scanned',keywords:s.keywords||[],
       project:proj(s.project)?s.project:PROJECTS[0].id});
+    // Scanned rooms that name a project start out saved in it (like the built-in places).
+    if(proj(s.project)&&MEM[s.project])MEM[s.project].add(s.id);
   })})
   .catch(()=>{})
   .then(loadPlaceTags);

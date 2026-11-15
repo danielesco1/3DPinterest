@@ -20,7 +20,6 @@ const SPACES=[
  PL_('s8','POP MART','pop-mart.jpg','living',1.4,8.5,2.8,[{wall:'N',pos:.5,w:.9},{wall:'E',pos:.7,w:.9}],190,'Nov 5'),
  PL_('s9','Sam Edelman','sam-edelman.jpg','living',4.8,5.6,2.9,[{wall:'N',pos:.8,w:.9},{wall:'W',pos:.75,w:.8}],265,'Nov 1'),
  PL_('s10','Four Seasons Hotel New York Downtown','four-seasons-hotel-new-york-downtown.jpg','lounge',12.0,9.0,7.2,[{wall:'S',pos:.5,w:2.4},{wall:'N',pos:.2,w:1.2}],140,'Nov 7'),
- Object.assign(PL_('s11','M Social Hotel New York Downtown','m-social-hotel-new-york-downtown.jpg','lounge',8.4,6.0,3.8,[{wall:'E',pos:.5,w:1.6}],12,'Nov 4'),{tagsFolder:'m-social-hotel-new-york-downtown'}),
  PL_('s12','Ole and Steen','ole-and-steen.jpg','lounge',3.2,2.2,3.0,[{wall:'S',pos:.5,w:1.2},{wall:'N',pos:.5,w:1.6}],330,'Oct 30'),
  PL_('s13','Oculus World Trade Center','oculus-world-trade-center.jpg',null,12.0,9.0,7.2,[{wall:'S',pos:.5,w:2.4},{wall:'N',pos:.2,w:1.2}],140,'Nov 14'),
  PL_('s14',"St. Peter's Roman Catholic Church",'st-peters-roman-catholic-church.jpg',null,8.4,6.0,3.8,[{wall:'E',pos:.5,w:1.6}],12,'Nov 14'),
