@@ -2,7 +2,7 @@
 
 Video captures of real spaces, reconstructed as navigable 3D scenes.
 
-**Live demo:** https://danielesco1.github.io/3DPinterest/roomboard/
+**Live demo:** https://danielesco1.github.io/Roomboard/roomboard/
 
 Roomboard is a Pinterest for rooms: browse real places by photo, keyword and size, open a scanned room in 3D, and click a highlight from the narration (for example "curtains" or "window-view") to see the room from where the narrator was standing when they said it.
 
@@ -10,7 +10,7 @@ Roomboard is a Pinterest for rooms: browse real places by photo, keyword and siz
 
 ## Try it in 30 seconds
 
-1. Open the [live demo](https://danielesco1.github.io/3DPinterest/roomboard/).
+1. Open the [live demo](https://danielesco1.github.io/Roomboard/roomboard/).
 2. Click **M Social Hotel New York Downtown** (or **McNally Jackson Books Seaport**).
 3. Wait a few seconds for the 3D scan (about 32 MB), then drag to look around.
 4. Click a highlight such as **curtains** or **high-ceiling** to fly to the narrator's view.
