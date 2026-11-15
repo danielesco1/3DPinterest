@@ -1,6 +1,8 @@
 /* ---------- Scanned rooms: read rooms/index.json and add each room to SPACES before the app boots.
    If the files are missing or unreadable, the sample rooms stay exactly as they were. ---------- */
-const ROOMS_URL='https://storage.googleapis.com/roomboard-demo-rooms/rooms/';
+/* Where scanned rooms are read from. To use your own rooms, set window.ROOMBOARD_DATA_URL in index.html
+   (an https folder holding index.json and one folder per room). Defaults to the demo bucket. */
+const ROOMS_URL=((typeof window!=='undefined'&&window.ROOMBOARD_DATA_URL)||'https://storage.googleapis.com/roomboard-demo-rooms/rooms/').replace(/\/?$/,'/');
 /* Google's edge cache can hold an old copy of a public file for up to an hour; a unique query skips it. */
 const fresh=u=>u+(u.includes('?')?'&':'?')+'v='+Date.now();
 function loadRooms(){
