@@ -3,8 +3,8 @@ const PCOLORS=['#c2410c','#1d4ed8','#047857','#7c3aed','#b45309','#be185d','#0e7
 const TAGCOL={corridor:'#64748b',threshold:'#d97706'};
 const ls={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 ls.get('rb-projects',[]).forEach(p=>{if(p&&p.id&&!PROJECTS.find(q=>q.id===p.id))PROJECTS.push(p)});
-const MEM=(()=>{const m=ls.get('rb-mem',null),seed={cafe:['c4','c17'],living:['c33'],lounge:['c58']},out={};
- PROJECTS.forEach(p=>out[p.id]=new Set(m&&m[p.id]?m[p.id]:SPACES.filter(s=>s.project===p.id).map(s=>s.id).concat(seed[p.id]||[])));return out})();
+const MEM=(()=>{const m=ls.get('rb-mem',null),seed={},out={},gone=id=>/^c\d+$/.test(id);
+ PROJECTS.forEach(p=>out[p.id]=new Set((m&&m[p.id]?m[p.id]:SPACES.filter(s=>s.project===p.id).map(s=>s.id).concat(seed[p.id]||[])).filter(id=>!gone(id))));return out})();
 function persistMem(){const o={};for(const k in MEM)o[k]=[...MEM[k]];ls.set('rb-mem',o);ls.set('rb-projects',PROJECTS.map(({id,name,note,color})=>({id,name,note,color})))}
 function inBoard(pid,sid){return !!(MEM[pid]&&MEM[pid].has(sid))}
 function projOf(s){return PROJECTS.find(p=>inBoard(p.id,s.id))||null}
