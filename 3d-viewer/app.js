@@ -94,10 +94,11 @@ function validFlyMessage(event){
  return event.source===window.parent&&
   (event.origin===location.origin||event.origin==='https://danielesco1.github.io')&&
   event.data?.type==='fly'&&Array.isArray(event.data.position)&&
-  event.data.position.length===3&&event.data.position.every(Number.isFinite);
+  event.data.position.length===3&&event.data.position.every(Number.isFinite)&&
+  (event.data.camera==null||(Array.isArray(event.data.camera)&&event.data.camera.length===3&&event.data.camera.every(Number.isFinite)));
 }
 function cancelFlight(){flight=null}
-function flyTo(position){
+function flyTo(position,cameraAt){
  if(sectionDrag)return;
  stop();
  // Capture mode has a custom projection and stale orbit target; restore orbit first.
@@ -108,8 +109,9 @@ function flyTo(position){
  offset.setLength(Math.max(.1,Math.min(offset.length(),Math.max(extent*.25,.1))));
  // Flush residual orbit damping before starting the deterministic transition.
  const damping=controls.enableDamping;controls.enableDamping=false;controls.update();controls.enableDamping=damping;
+ // With a camera position (the narrator's filmed view) fly there; otherwise keep the current viewing direction.
  flight={start:performance.now(),from:camera.position.clone(),targetFrom:controls.target.clone(),
-  to:target.clone().add(offset),target};
+  to:cameraAt?new THREE.Vector3(...cameraAt):target.clone().add(offset),target};
  $('capture').textContent='Capture view';
 }
 function updateFlight(now){
@@ -120,7 +122,7 @@ function updateFlight(now){
  camera.lookAt(controls.target);
  if(t===1)flight=null;
 }
-addEventListener('message',event=>{if(validFlyMessage(event))flyTo(event.data.position)});
+addEventListener('message',event=>{if(validFlyMessage(event))flyTo(event.data.position,event.data.camera)});
 controls.addEventListener('start',cancelFlight);
 // Direct manipulation and existing buttons/sliders always take precedence.
 document.addEventListener('pointerdown',cancelFlight,true);
@@ -135,9 +137,16 @@ fit();select(0);
 if(document.documentElement.classList.contains('embed')){
  if(showOverlay)$('overlay').click();
  $('core').checked=false;coreGroup.visible=false;
- // Stand at the end of the walk farthest from the path centre, slightly raised, looking back across the room.
- const far=positions.reduce((a,b)=>b.distanceTo(center)>a.distanceTo(center)?b:a,positions[0]);
- const back=far.clone().sub(center);back.y=0;if(back.lengthSq()<1e-6)back.set(1,0,1);back.setLength(.4);
- camera.position.copy(far).add(back).add(new THREE.Vector3(0,.35,0));controls.target.copy(center);camera.lookAt(center);controls.update();
+ // Open on a real filmed view: the frame whose camera looks most directly into the room (towards the path
+ // centre, weighted by distance), so the splat is seen from where it was captured and looks sharpest.
+ let best=0,bestScore=-Infinity;
+ frames.forEach((f,i)=>{const e=f.camera.extrinsics,p=new THREE.Vector3(...e.position),fw=new THREE.Vector3(0,0,-1).applyQuaternion(new THREE.Quaternion(...e.quaternion));
+  const to=center.clone().sub(p);const d=to.length();if(d<1e-6)return;const score=fw.dot(to.normalize())*Math.min(d,extent);if(score>bestScore){bestScore=score;best=i}});
+ const be=frames[best].camera.extrinsics,bp=new THREE.Vector3(...be.position),bf=new THREE.Vector3(0,0,-1).applyQuaternion(new THREE.Quaternion(...be.quaternion));
+ camera.position.copy(bp);controls.target.copy(bp).addScaledVector(bf,2);camera.lookAt(controls.target);
+ // Keep visitors near the filmed viewpoints, where the reconstruction holds up.
+ controls.minDistance=.15;controls.maxDistance=3.5;controls.update();
+ // Tighter room crop to drop floaters along the walls (convex rooms only).
+ $('margin').value='0.25';updateCrop();
 }
 renderer.setAnimationLoop(now=>{updateFlight(now);if(playing){const t=frames[startFrame].source_time_seconds+(now-start)/1000;let next=frame;while(next<frames.length-1&&frames[next+1].source_time_seconds<=t)next++;if(next!==frame)select(next);if(frame===frames.length-1)stop()}if(!capture&&!sectionDrag&&!flight)controls.update();const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);renderer.clear();if(capture){const k=frames[frame].camera.intrinsics,scale=Math.min(w/k.width,h/k.height),vw=k.width*scale,vh=k.height*scale;renderer.setViewport((w-vw)/2,(h-vh)/2,vw,vh)}renderer.clippingPlanes=[];renderer.render(scene,camera);renderer.clippingPlanes=$('sectionOverlays').checked&&sectionClip?[sectionClip]:[];renderer.clearDepth();renderer.render(cadScene,camera);if(showOverlay){renderer.clearDepth();renderer.render(overlay,camera)}renderer.clippingPlanes=[];renderer.clearDepth();renderer.render(sectionScene,camera);updateGumball()});window.viewerState=()=>({loaded,frame,capture,numSplats:splat.numSplats,showOverlay,shells:Object.fromEntries(Object.entries(shellGroups).map(([k,v])=>[k,v.group.visible]))});
