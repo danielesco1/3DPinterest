@@ -209,7 +209,7 @@ async function mountVault(stage,ui,pid){const P=proj(pid);
   stop(){VCAMS[pid]={p:camera.position.toArray(),t:controls.target.toArray(),sel};cancelAnimationFrame(raf);ro.disconnect();window.removeEventListener('pointermove',onMove);window.removeEventListener('pointermove',onRot);controls.dispose();renderer.dispose();VAULT_API=null}}}
 
 
-function vaultView(m){m.innerHTML=`<p class="intro">Vault</p><p class="lede">Every project as true-scale volumes. Open one to arrange its spaces in 3D, try the built-in arrangements, or save your own layouts.</p>
+function vaultView(m){m.innerHTML=`<p class="intro">Board</p><p class="lede">Every project as true-scale volumes. Open one to arrange its spaces in 3D, try the built-in arrangements, or save your own layouts.</p>
  <div class="vprojects">${PROJECTS.map(p=>{const ss=inProject(p.id),st=vl(p.id);return `<a class="vproj card" href="#" data-go="v:${p.id}" style="--pc:${p.color}"><div class="vp-plan">${boardPlan(p.id)}</div>
  <div class="vp-t"><b><i></i>${p.name}</b><span>${ss.length} space${ss.length===1?'':'s'} · ${totalArea(ss)}</span></div>
  <div class="vp-l"><span class="vp-cur">${layoutName(p.id,st.active)}</span>${st.custom.length?`<span>${st.custom.length} saved layout${st.custom.length>1?'s':''}</span>`:''}<span class="vp-go">Open in 3D →</span></div></a>`}).join('')}
