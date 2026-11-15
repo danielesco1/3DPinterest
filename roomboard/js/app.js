@@ -6,7 +6,7 @@ const CHEV='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 8l4.5 4.5L
 const roomsN=id=>MEM[id]?MEM[id].size:0;
 function pillsHTML(){const ps=PINNED.map(proj).filter(Boolean);
  return `<button type="button" class="chip pill pall" data-pid="all" aria-pressed="${FILT.scope==='all'}" title="Show every room">All</button>`+ps.map(p=>`<button type="button" class="chip pill" data-pid="${p.id}" aria-pressed="${p.id===FILT.scope}" style="--pc:${p.color}" title="Show only ${esc(p.name)}. Double-click to open the project."><i></i>${esc(p.name)}<span class="pn">${roomsN(p.id)}</span></button>`).join('')+(ps.length?'':'<span class="pempty">Tick projects under Projects to show them here.</span>')}
-function setScope(pid){FILT.scope=pid;document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pid===pid));if(pid!=='all'){ACTIVE=pid;savePins()}if(CUR==='feed'){if(SCOPE_APPLY)SCOPE_APPLY()}else go('feed')}
+function setScope(pid){FILT.scope=pid;document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pid===pid));if(pid!=='all'){ACTIVE=pid;savePins();refreshBms()}if(CUR==='feed'){if(SCOPE_APPLY)SCOPE_APPLY()}else go('feed')}
 function initNav(){$('#nav').innerHTML=`<button type="button" class="pdrop" aria-haspopup="dialog" aria-expanded="false">Projects${CHEV}</button><div class="pills" id="pills" role="group" aria-label="Shown projects"></div><button type="button" class="pcreate" aria-haspopup="dialog">+ New project</button>`;renderNav();
  let last={pid:null,t:0};
  $('#nav').addEventListener('click',e=>{const pill=e.target.closest('.pill');
