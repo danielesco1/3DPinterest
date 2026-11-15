@@ -1,4 +1,4 @@
-# 3DPinterest
+# Roomboard
 
 Video captures of real spaces, reconstructed as navigable 3D scenes.
 
