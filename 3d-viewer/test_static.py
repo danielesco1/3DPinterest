@@ -18,7 +18,7 @@ class StaticTests(unittest.TestCase):
     def test_relative_picker_has_no_local_path(self):
         config = serve.scene_config('hotel', True)
         self.assertNotIn('assets', config)
-        self.assertEqual([s['url'] for s in config['scenes']], ['../bookstore/', '../first-room/', '../hotel/'])
+        self.assertEqual([s['url'] for s in config['scenes']], ['../bookstore/index.html', '../first-room/index.html', '../hotel/index.html'])
 
     def test_export_reuses_adapter_and_allowlist(self):
         with tempfile.TemporaryDirectory() as tmp:
