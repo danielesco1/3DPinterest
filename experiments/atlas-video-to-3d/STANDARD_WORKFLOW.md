@@ -39,6 +39,7 @@ Optional transcription and a configured Astra bridge use the underlying CLI docu
 ## Geometry review: use one source of truth
 
 - Derive the plan, volume, opening outlines and viewer geometry from the same reviewed CAD evidence. Keep coordinate system, origin and units consistent; check the plan is not mirrored.
+- Attempt a coherent full volume by default. Infer incomplete closure with explicit inference basis and uncertainty; reserve unsupported for wholly insufficient data or unrepresentable topology.
 - Check floor/ceiling, footprint and wall continuity against several frames, camera poses and depth. Do not force every space into a rectangle.
 - Tag doors/windows/openings and retain evidence, confidence and unknowns. Floor-reaching doorway estimates are explicitly inferred; do not move window sills to the floor or invent hidden openings.
 - Display actual wall cutouts where supported, not just lines drawn over a solid wall. Check door swings into the room as an illustrative estimate, not a measured fact.

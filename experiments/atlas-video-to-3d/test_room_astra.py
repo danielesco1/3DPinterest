@@ -15,7 +15,12 @@ def proposal():
         scale={'status':'uncalibrated'},openings=[])
     surfaces=[dict(id=f'wall-{i}',kind='wall',wall_index=i,certainty='observed',samples=[dict(artifact=ref,frame='frame-1',pixel=[5,5])],fit={'method':'plane fit','residual_scene_units':None}) for i in range(6)]
     surfaces += [dict(id=k,kind=k,certainty='inferred',samples=[dict(artifact=ref,frame='frame-1',pixel=[5,5])],fit={'method':'not computed','residual_scene_units':None}) for k in ('floor','ceiling')]
-    return dict(status='proposal',model='test-double',limitations=['Test only, no inference'],evidence=evidence,surfaces=surfaces)
+    for surface in surfaces:
+        surface.update(uncertainty='Synthetic fixture, not measured', evidence=[ref])
+        if surface['certainty']=='inferred':
+            surface.update(inference_basis='Synthetic adjacent-wall closure', samples=[])
+    evidence.update(surface_provenance=surfaces, opening_review='Synthetic fixture only; no opening claims')
+    return dict(opening_review='Synthetic fixture only; no opening claims', status='proposal',model='test-double',limitations=['Test only, no inference'],evidence=evidence,surfaces=surfaces)
 
 class AstraTests(unittest.TestCase):
     def setUp(self):
@@ -54,7 +59,23 @@ class AstraTests(unittest.TestCase):
     def test_missing_wall(self):
         p=proposal(); p['surfaces'].pop(0)
         with self.assertRaises(ValueError):validate_proposal(p,prepare_request(self.root,'take'))
-    def test_unsupported(self):validate_proposal(dict(status='unsupported',model='test',limitations=['No ceiling observed']),prepare_request(self.root,'take'))
+    def test_inferred_volume_without_fake_pixels(self):
+        p=proposal()
+        validate_proposal(p,prepare_request(self.root,'take'))
+        self.assertEqual(p['surfaces'][-1]['samples'], [])
+    def test_inference_requires_basis(self):
+        p=proposal(); p['surfaces'][-1].pop('inference_basis')
+        with self.assertRaises(ValueError): validate_proposal(p,prepare_request(self.root,'take'))
+    def test_observed_requires_pixels(self):
+        p=proposal(); p['surfaces'][0]['samples']=[]
+        with self.assertRaises(ValueError): validate_proposal(p,prepare_request(self.root,'take'))
+    def test_requires_uncertainty_and_opening_review(self):
+        for field in ('uncertainty',):
+            p=proposal(); p['surfaces'][0].pop(field)
+            with self.assertRaises(ValueError): validate_proposal(p,prepare_request(self.root,'take'))
+        p=proposal(); p.pop('opening_review')
+        with self.assertRaises(ValueError): validate_proposal(p,prepare_request(self.root,'take'))
+    def test_unsupported(self):validate_proposal(dict(status='unsupported',model='test',limitations=['Wholly insufficient imagery and depth to estimate an envelope']),prepare_request(self.root,'take'))
 
 
 class GeometryTests(unittest.TestCase):

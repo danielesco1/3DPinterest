@@ -141,6 +141,7 @@ def build_cad(evidence_path: Path, output_dir: Path) -> dict[str, str]:
         openings.append(dict(item,local_corners=corners,corners=[world(p) for p in corners]))
     result = dict(schema_version=1, source_take_id=data['source_take_id'], review=data['review'], evidence=data['evidence'], frame=frame, scale=scale,
                   shell=dict(vertices=vertices,faces=faces,floor_polygon=points,height=height), openings=openings,
+                  surface_provenance=data.get('surface_provenance', []), opening_review=data.get('opening_review'),
                   measurements=dict(area_scene_units_squared=area,volume_scene_units_cubed=area*height),
                   limitations=['Reviewed estimate, not surveyed as-built CAD.','Flat ceiling and vertical walls only.','Openings are separate outlines; wall thickness and recesses unknown.','OBJ polygon faces require triangulation for some renderers.'])
     if scale['status'] != 'uncalibrated':

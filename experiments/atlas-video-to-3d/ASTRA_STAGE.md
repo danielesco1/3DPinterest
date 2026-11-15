@@ -16,10 +16,18 @@ Astra must use Atlas geometry, not redraw the room from appearance alone. It
 selects relevant opaque floor/wall/ceiling samples across views, uses depth and
 confidence to fit geometry in native coordinates, and identifies openings from
 images. The splat is an overlay check, not a bounding-box source. No rectangular
-room template is imposed. Unobserved closure and uncertain boundaries remain
-explicit. Complex/sloping/multi-level rooms currently require an unsupported
-result or an explicitly reviewed simplification: the CAD exporter supports a
-simple concave/nonorthogonal polygon with vertical walls and a flat ceiling.
+room template is imposed. Default: attempt a complete coherent volume, including
+walls, floor, ceiling and inspection for openings. Infer missing closure when
+context supports it; label every surface observed/inferred, explain uncertainty
+and cite the inference basis. An unseen ceiling alone is not a failure.
+
+Use a labeled LOD100 simplification for complex geometry when defensible. Reserve
+unsupported for wholly insufficient evidence or topology that cannot be safely
+represented. The exporter supports a simple concave/nonorthogonal polygon,
+vertical walls and a flat ceiling, not arbitrary curved or multilevel geometry.
+Do not fabricate openings or pixel samples. Record unresolved candidates and
+coverage gaps. Door/passage bottoms can be extrapolated to the floor as inferred;
+window sills remain separate. Scale stays uncalibrated without a physical reference.
 
 ## Local handoff
 
@@ -52,8 +60,12 @@ an uncertain invocation. Reconcile provider/session status before clearing state
 ## Response and review
 
 Response fields are documented in `room_pipeline/astra.py` instructions. Every
-wall, floor and ceiling needs source-frame/pixel provenance, observed/inferred
-status and a fit method/residual (null when not computed). Evidence paths must
+wall, floor and ceiling needs observed/inferred status, uncertainty and a fit
+method/residual (null when not computed). Observed surfaces need actual pixels;
+inferred surfaces may have no pixel samples but require real supporting artifact
+references and an inference basis. Every response records opening inspection,
+including coverage gaps when no openings are proposed. Surface provenance and
+opening review are also retained in CAD evidence and exported geometry. Evidence paths must
 exist in the hashed request. Geometry must satisfy `CAD_EVIDENCE.md`. The proposal
 must remain `needs_review`, with uncalibrated scale. Unknown conditions must not
 be converted into fabricated precision or a trusted metric model.
@@ -85,3 +97,5 @@ Validation is structural, not proof of reconstruction accuracy. The inventory
 requires local pose artifacts but does not establish that every required RGBD
 channel is decodable. Frame names/pixel bounds and reported residuals still need
 independent checks against the actual decoded source data during review.
+
+Prompt/schema changes require a new take revision; preserve existing requests and responses. Do not silently rewrite prior evidence or re-run paid jobs.
