@@ -1,0 +1,29 @@
+{
+  "walls": {
+    "sample_keywords": [
+      "brick"
+    ],
+    "surfaces": [
+      "W07",
+      "W01"
+    ]
+  },
+  "ceiling": {
+    "sample_keywords": [
+      "beam",
+      "timber"
+    ],
+    "surfaces": [
+      "CEILING"
+    ]
+  },
+  "floor": {
+    "sample_keywords": [
+      "floor_tile"
+    ],
+    "element": "D01"
+  },
+  "atrium-lighting": {
+    "element": "STAIR_RAMP"
+  }
+}
