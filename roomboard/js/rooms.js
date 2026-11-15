@@ -17,12 +17,21 @@ function loadRooms(){
 }
 
 /* Scanned rooms: the hero image becomes the 3D splat viewer, and keywords with an anchor fly the camera there. */
-const anchorFor=(s,k)=>(s.anchors||[]).find(a=>Array.isArray(a.position)&&a.position.every(n=>typeof n==='number')&&(a.tags||[]).includes(k));
+const anchorFor=(s,k)=>(s.anchors||[]).find(a=>Array.isArray(a.position)&&a.position.length===3&&a.position.every(Number.isFinite)&&(a.tags||[]).includes(k));
 function kwItem(s,k){const a=s.scanned&&anchorFor(s,k);
  return a?`<li role="button" tabindex="0" data-fly="${a.position.join(',')}" title="Show in 3D" style="cursor:pointer">${esc(k)} ↗</li>`:`<li>${esc(k)}</li>`}
+// Reject executable URLs while retaining same-origin and external HTTPS viewers.
+function viewerURL(s){
+ const fallback='viewer.html?room='+encodeURIComponent(s.id);
+ try{const url=new URL(s.viewer||fallback,location.href);
+  return ['http:','https:'].includes(url.protocol)?url.href:new URL(fallback,location.href).href;
+ }catch{return new URL(fallback,location.href).href}
+}
 function heroPane(s){if(!s.scanned)return `<div class="hero" style="${photo(s)}"></div>`;
- return `<div class="hero" style="position:relative;overflow:hidden;background:#111"><iframe id="scanview" src="viewer.html?room=${encodeURIComponent(s.id)}" title="3D scan of ${esc(s.name)}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="fullscreen"></iframe></div>`}
+ return `<div class="hero" style="position:relative;overflow:hidden;background:#111"><iframe id="scanview" src="${esc(viewerURL(s))}" title="3D scan of ${esc(s.name)}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="fullscreen"></iframe></div>`}
 function flyFrom(el){const f=document.getElementById('scanview');if(!f||!f.contentWindow)return;
- f.contentWindow.postMessage({type:'fly',position:el.dataset.fly.split(',').map(Number)},location.origin)}
+ const position=el.dataset.fly.split(',').map(Number);
+ if(position.length!==3||!position.every(Number.isFinite))return;
+ f.contentWindow.postMessage({type:'fly',position},new URL(f.src,location.href).origin)}
 document.addEventListener('click',e=>{const el=e.target.closest('[data-fly]');if(el)flyFrom(el)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const el=e.target.closest&&e.target.closest('[data-fly]');if(el){e.preventDefault();flyFrom(el)}}});

@@ -9,6 +9,8 @@ from urllib.parse import urlsplit
 HERE = Path(__file__).resolve().parent
 BASE = HERE
 SCENES = {
+    'bookstore': {'title': 'Bookstore', 'assets': 'work/bookstore-concept', 'adapter': 'core-envelope', 'diagnostics': False, 'cadHeading': 'Astra conceptual shell · needs review', 'cadNotes': 'Revision 02: inferred concave ground-floor shell and approximate opening outlines, not cut holes. Uncalibrated; not surveyed. Stairs are provisional. Convex crop disabled for this footprint.',
+                  'notes': 'Astra inferred LOD100 volume and openings; needs review. Native coordinates unchanged. Dimensions are uncalibrated estimates, not surveyed measurements.'},
     'first-room': {'title': 'First room', 'assets': 'work/pose-viewer', 'adapter': 'astra-shell', 'labelScale': 0.35,
                    'notes': 'Astra estimated shell. All corners and openings are inferred, not surveyed. Cyan outlines are not cut holes. Original observed window sills retained. Feet/inches assume 1 native unit = 1 metre, UNVERIFIED. Source geometry unchanged.'},
     'hotel': {'title': 'Hotel', 'assets': 'work/hotel-advanced-viewer', 'adapter': 'core-envelope',
@@ -52,6 +54,44 @@ def first_room_envelope(root):
                                      tag=o['id'], uncertain_edges=[0, 1, 2, 3]) for o in openings]}
 
 
+ALIASES = {'core-plan.svg': 'room-vector-exports/room-plan.svg',
+           'core-volume.svg': 'room-vector-exports/room-volume.svg'}
+
+
+def scene_config(scene_id, static=False, scene_ids=None):
+    cfg = dict(SCENES[scene_id])
+    cfg.pop('assets', None)  # Do not publish local filesystem details.
+    return dict(cfg, id=scene_id, scenes=[
+        {'id': key, 'title': SCENES[key]['title'],
+         'url': f'../{key}/' if static else f'/scene/{key}/'}
+        for key in (scene_ids or SCENES)])
+
+
+def generated_asset(scene_id, name, base=None):
+    root = (base or BASE) / SCENES[scene_id]['assets']
+    if name == 'scene.json':
+        return scene_config(scene_id)
+    if SCENES[scene_id]['adapter'] == 'astra-shell':
+        if name == 'core-envelope.json':
+            return first_room_envelope(root)
+        if name == 'partial-sample-points.json':
+            return {'groups': {}}
+        if name == 'provisional-outlines.json':
+            return {'items': []}
+    return None
+
+
+def asset_path(scene_id, name, base=None):
+    root = (base or BASE) / SCENES[scene_id]['assets']
+    if name in SOURCE_FILES:
+        return HERE / name
+    if name.startswith('vendor/') and name[7:] in VENDOR_FILES:
+        return root / name
+    if name in ASSET_FILES:
+        return root / (ALIASES.get(name, name) if scene_id == 'first-room' else name)
+    raise ValueError(f'Unsupported asset: {name}')
+
+
 class Handler(SimpleHTTPRequestHandler):
     def send_json(self, value):
         payload = json.dumps(value).encode()
@@ -77,30 +117,13 @@ class Handler(SimpleHTTPRequestHandler):
         asset_root = (BASE / cfg['assets']).resolve()
         name = '/'.join(parts[2:]) or 'index.html'
         try:
-            if name == 'scene.json':
-                self.send_json(dict(cfg, id=scene_id, scenes=[
-                    {'id': key, 'title': c['title'], 'url': f'/scene/{key}/'}
-                    for key, c in SCENES.items()]))
+            generated = generated_asset(scene_id, name)
+            if generated is not None:
+                self.send_json(generated)
                 return
-            if cfg['adapter'] == 'astra-shell':
-                if name == 'core-envelope.json':
-                    self.send_json(first_room_envelope(asset_root))
-                    return
-                if name == 'partial-sample-points.json':
-                    self.send_json({'groups': {}})
-                    return
-                if name == 'provisional-outlines.json':
-                    self.send_json({'items': []})
-                    return
-            if name in SOURCE_FILES:
-                target = HERE / name
-            elif name.startswith('vendor/') and name[7:] in VENDOR_FILES:
-                target = asset_root / name
-            elif name in ASSET_FILES:
-                aliases = {'core-plan.svg': 'room-vector-exports/room-plan.svg',
-                           'core-volume.svg': 'room-vector-exports/room-volume.svg'}
-                target = asset_root / (aliases.get(name, name) if scene_id == 'first-room' else name)
-            else:
+            try:
+                target = asset_path(scene_id, name)
+            except ValueError:
                 self.send_error(404)
                 return
             if not target.is_file():
