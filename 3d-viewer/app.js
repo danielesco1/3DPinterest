@@ -46,16 +46,26 @@ if(surface){
   for(const face of coreData.faces)for(let i=1;i<face.length-1;i++)
     triangles.push(...coreData.vertices[face[0]],...coreData.vertices[face[i]],...coreData.vertices[face[i+1]]);
 }
+if(config.cadNotes)$('geometryNotes').textContent=config.cadNotes;
 const faceGeo=new THREE.BufferGeometry();faceGeo.setAttribute('position',new THREE.Float32BufferAttribute(triangles,3));const coreFaces=new THREE.Mesh(faceGeo,new THREE.MeshBasicMaterial({color:0x78bbdf,transparent:true,opacity:surface ? .35 : .08,side:THREE.DoubleSide,depthWrite:false,depthTest:false}));coreGroup.add(coreFaces);$('core').onchange=e=>coreGroup.visible=e.target.checked;$('coreFaces').onchange=e=>coreFaces.visible=e.target.checked;
 
 
 // Restore the previous room-plus-margin filter. The Hotel envelope is not
 // orthogonal, so six offset face half-spaces replace the former box SDF.
+const cropSupported=coreData.crop_supported!==false;
+if(!cropSupported){
+  $('coreHeading').textContent=config.cadHeading||'Inferred conceptual volume';
+  $('core').parentElement.lastChild.textContent=' Show inferred conceptual volume';
+  $('diagnostics').hidden=true;
+  for(const id of ['crop','margin','cropBounds'])$(id).disabled=true;
+  $('crop').checked=false;$('cropBounds').checked=false;
+  $('crop').parentElement.title='Convex crop is unavailable for this scene geometry';
+}
 const trimCenter=coreData.vertices.reduce((a,p)=>a.add(new THREE.Vector3(...p)),new THREE.Vector3()).multiplyScalar(1/coreData.vertices.length);
-const trimPlanes=coreData.faces.map(face=>{const a=new THREE.Vector3(...coreData.vertices[face[0]]),b=new THREE.Vector3(...coreData.vertices[face[1]]),c=new THREE.Vector3(...coreData.vertices[face[2]]);const n=b.clone().sub(a).cross(c.clone().sub(a)).normalize();if(n.dot(trimCenter.clone().sub(a))>0)n.negate();const edit=new SplatEdit({name:'Reversible room exterior crop',invert:true,softEdge:0.03}),shape=new SplatEditSdf({type:SplatEditSdfType.PLANE,opacity:0});shape.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),n);edit.add(shape);return{face,n,d:n.dot(a),edit,shape};});
+const trimPlanes=(cropSupported?coreData.faces:[]).map(face=>{const a=new THREE.Vector3(...coreData.vertices[face[0]]),b=new THREE.Vector3(...coreData.vertices[face[1]]),c=new THREE.Vector3(...coreData.vertices[face[2]]);const n=b.clone().sub(a).cross(c.clone().sub(a)).normalize();if(n.dot(trimCenter.clone().sub(a))>0)n.negate();const edit=new SplatEdit({name:'Reversible room exterior crop',invert:true,softEdge:0.03}),shape=new SplatEditSdf({type:SplatEditSdfType.PLANE,opacity:0});shape.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),n);edit.add(shape);return{face,n,d:n.dot(a),edit,shape};});
 const trimWire=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0x80ff80,depthTest:false}));cadScene.add(trimWire);
 function expandedTrimVertex(index,margin){const ps=trimPlanes.filter(p=>p.face.includes(index));if(ps.length!==3)throw Error('Expected three faces per core vertex');const [a,b,c]=ps,bc=b.n.clone().cross(c.n),ca=c.n.clone().cross(a.n),ab=a.n.clone().cross(b.n),det=a.n.dot(bc);if(Math.abs(det)<1e-8)throw Error('Degenerate core crop');return bc.multiplyScalar(a.d+margin).add(ca.multiplyScalar(b.d+margin)).add(ab.multiplyScalar(c.d+margin)).divideScalar(det);}
-function updateCrop(){const margin=+$('margin').value;$('marginValue').textContent=margin.toFixed(2);for(const p of trimPlanes){p.shape.position.copy(p.n).multiplyScalar(p.d+margin);if($('crop').checked&&!p.edit.parent)splat.add(p.edit);if(!$('crop').checked&&p.edit.parent)splat.remove(p.edit);}const v=coreData.vertices.map((_,i)=>expandedTrimVertex(i,margin)),edges=new Set(),points=[];for(const face of coreData.faces)for(let j=0;j<face.length;j++){const a=face[j],b=face[(j+1)%face.length],key=[a,b].sort((x,y)=>x-y).join(',');if(!edges.has(key)){edges.add(key);points.push(v[a],v[b]);}}trimWire.geometry.dispose();trimWire.geometry=new THREE.BufferGeometry().setFromPoints(points);trimWire.visible=$('cropBounds').checked;splat.updateVersion();}
+function updateCrop(){if(!cropSupported){trimWire.visible=false;return;}const margin=+$('margin').value;$('marginValue').textContent=margin.toFixed(2);for(const p of trimPlanes){p.shape.position.copy(p.n).multiplyScalar(p.d+margin);if($('crop').checked&&!p.edit.parent)splat.add(p.edit);if(!$('crop').checked&&p.edit.parent)splat.remove(p.edit);}const v=coreData.vertices.map((_,i)=>expandedTrimVertex(i,margin)),edges=new Set(),points=[];for(const face of coreData.faces)for(let j=0;j<face.length;j++){const a=face[j],b=face[(j+1)%face.length],key=[a,b].sort((x,y)=>x-y).join(',');if(!edges.has(key)){edges.add(key);points.push(v[a],v[b]);}}trimWire.geometry.dispose();trimWire.geometry=new THREE.BufferGeometry().setFromPoints(points);trimWire.visible=$('cropBounds').checked;splat.updateVersion();}
 ['crop','margin','cropBounds'].forEach(id=>$(id).oninput=updateCrop);updateCrop();
 
 const navBox=new THREE.Box3().setFromPoints(navigationPoints),navCenter=navBox.getCenter(new THREE.Vector3()),navHalf=navBox.getSize(new THREE.Vector3()).multiplyScalar(.5);const cropBox={center:navCenter.toArray(),half:navHalf.toArray(),axes:[[1,0,0],[0,1,0],[0,0,1]]};

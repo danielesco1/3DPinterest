@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 HERE = Path(__file__).resolve().parent
 BASE = HERE
 SCENES = {
-    'bookstore': {'title': 'Bookstore', 'assets': 'work/bookstore-concept', 'adapter': 'core-envelope', 'diagnostics': False,
+    'bookstore': {'title': 'Bookstore', 'assets': 'work/bookstore-concept', 'adapter': 'core-envelope', 'diagnostics': False, 'cadHeading': 'Astra conceptual shell · needs review', 'cadNotes': 'Revision 02: inferred concave ground-floor shell and approximate opening outlines, not cut holes. Uncalibrated; not surveyed. Stairs are provisional. Convex crop disabled for this footprint.',
                   'notes': 'Astra inferred LOD100 volume and openings; needs review. Native coordinates unchanged. Dimensions are uncalibrated estimates, not surveyed measurements.'},
     'first-room': {'title': 'First room', 'assets': 'work/pose-viewer', 'adapter': 'astra-shell', 'labelScale': 0.35,
                    'notes': 'Astra estimated shell. All corners and openings are inferred, not surveyed. Cyan outlines are not cut holes. Original observed window sills retained. Feet/inches assume 1 native unit = 1 metre, UNVERIFIED. Source geometry unchanged.'},
