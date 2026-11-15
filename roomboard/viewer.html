@@ -70,6 +70,7 @@ function flyTo(position, duration = 1.2) {
 
 // The room page sends { type: "fly", position: [x, y, z] } when a keyword is clicked.
 addEventListener("message", (e) => {
+  if (e.origin !== location.origin) return;
   const d = e.data || {};
   if (d.type === "fly" && Array.isArray(d.position) && d.position.length === 3) flyTo(d.position);
 });

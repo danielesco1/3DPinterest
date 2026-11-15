@@ -111,10 +111,10 @@ const VIEWS={
  space(m,s){m.innerHTML=`<button class="back" data-go="back">← Back</button><div class="detail"><div class="hero" style="${photo(s)}"></div>
  <div class="info"><span class="eyebrow">${s.tag} · sheet ${sheetNo(s)}</span><h2>${s.name}</h2><p class="meta">${s.place} · ${savedTxt(s)}</p>
  <dl class="facts"><div><dt>Width</dt><dd>${len(s.w)}${est(s)}</dd></div><div><dt>Depth</dt><dd>${len(s.d)}${est(s)}</dd></div><div><dt>Height</dt><dd>${len(s.h)}${est(s)}</dd></div><div><dt>Floor area</dt><dd>${area(s)}${est(s)}</dd></div><div><dt>Volume</dt><dd>${volume(s)}${est(s)}</dd></div><div><dt>Doors</dt><dd>${s.doors.length}</dd></div></dl>
- ${s.keywords&&s.keywords.length?`<div class="hl"><div class="hl-h"><span class="eyebrow">Highlights</span><span class="hl-src">From the scan narration</span></div><ul class="kw">${s.keywords.map(k=>`<li>${k}</li>`).join('')}</ul></div>`:''}
+ ${s.keywords&&s.keywords.length?`<div class="hl"><div class="hl-h"><span class="eyebrow">Highlights</span><span class="hl-src">From the scan narration</span></div><ul class="kw">${s.keywords.map(k=>kwItem(s,k)).join('')}</ul></div>`:''}
  <div class="hl"><div class="hl-h"><span class="eyebrow">In projects</span></div><div class="inproj" id="inprojects" data-sid="${s.id}">${projChips(s)}</div></div>
  <div class="btns"><button class="btn" data-save="${s.id}" aria-pressed="${inAny(s.id)}" aria-haspopup="dialog"><span class="s-lbl">${saveLabel(s.id)}</span></button></div></div>
- <div class="pane"><small>Plan · ${scaleTxt(s)}</small><div class="planbig">${plan(s,{size:200,pad:26,dims:true})}</div></div><div class="pane"><small>Volume</small>${box3d(s)}</div></div>${moreLike(s)}`;bindMore(s)},
+ <div class="pane"><small>Plan · ${scaleTxt(s)}</small><div class="planbig">${plan(s,{size:200,pad:26,dims:true})}</div></div>${volPane(s)}</div>${moreLike(s)}`;bindMore(s)},
  vault(m){vaultView(m)},
  vproject(m,p){vaultProjectView(m,p)},
  capture(m){m.innerHTML=`<button class="back" data-go="back">← Back</button><p class="intro">Capture a space</p>${captureForm()}`}};
