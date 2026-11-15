@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id),stage=$('stage');
 const config=await(await fetch('./scene.json')).json();
 $('sceneTitle').textContent=config.title;
 $('geometryNotes').textContent=config.notes;
-$('diagnostics').hidden=config.adapter==='astra-shell';
+$('diagnostics').hidden=config.adapter==='astra-shell'||config.diagnostics===false;
 for(const item of config.scenes){const option=new Option(item.title,item.url);option.selected=item.id===config.id;$('scenePicker').add(option)}
 $('scenePicker').onchange=e=>location.assign(e.target.value);
 const data=await(await fetch('./viewer-data.json')).json(),frames=data.frames;
@@ -46,16 +46,26 @@ if(surface){
   for(const face of coreData.faces)for(let i=1;i<face.length-1;i++)
     triangles.push(...coreData.vertices[face[0]],...coreData.vertices[face[i]],...coreData.vertices[face[i+1]]);
 }
+if(config.cadNotes)$('geometryNotes').textContent=config.cadNotes;
 const faceGeo=new THREE.BufferGeometry();faceGeo.setAttribute('position',new THREE.Float32BufferAttribute(triangles,3));const coreFaces=new THREE.Mesh(faceGeo,new THREE.MeshBasicMaterial({color:0x78bbdf,transparent:true,opacity:surface ? .35 : .08,side:THREE.DoubleSide,depthWrite:false,depthTest:false}));coreGroup.add(coreFaces);$('core').onchange=e=>coreGroup.visible=e.target.checked;$('coreFaces').onchange=e=>coreFaces.visible=e.target.checked;
 
 
 // Restore the previous room-plus-margin filter. The Hotel envelope is not
 // orthogonal, so six offset face half-spaces replace the former box SDF.
+const cropSupported=coreData.crop_supported!==false;
+if(!cropSupported){
+  $('coreHeading').textContent=config.cadHeading||'Inferred conceptual volume';
+  $('core').parentElement.lastChild.textContent=' Show inferred conceptual volume';
+  $('diagnostics').hidden=true;
+  for(const id of ['crop','margin','cropBounds'])$(id).disabled=true;
+  $('crop').checked=false;$('cropBounds').checked=false;
+  $('crop').parentElement.title='Convex crop is unavailable for this scene geometry';
+}
 const trimCenter=coreData.vertices.reduce((a,p)=>a.add(new THREE.Vector3(...p)),new THREE.Vector3()).multiplyScalar(1/coreData.vertices.length);
-const trimPlanes=coreData.faces.map(face=>{const a=new THREE.Vector3(...coreData.vertices[face[0]]),b=new THREE.Vector3(...coreData.vertices[face[1]]),c=new THREE.Vector3(...coreData.vertices[face[2]]);const n=b.clone().sub(a).cross(c.clone().sub(a)).normalize();if(n.dot(trimCenter.clone().sub(a))>0)n.negate();const edit=new SplatEdit({name:'Reversible room exterior crop',invert:true,softEdge:0.03}),shape=new SplatEditSdf({type:SplatEditSdfType.PLANE,opacity:0});shape.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),n);edit.add(shape);return{face,n,d:n.dot(a),edit,shape};});
+const trimPlanes=(cropSupported?coreData.faces:[]).map(face=>{const a=new THREE.Vector3(...coreData.vertices[face[0]]),b=new THREE.Vector3(...coreData.vertices[face[1]]),c=new THREE.Vector3(...coreData.vertices[face[2]]);const n=b.clone().sub(a).cross(c.clone().sub(a)).normalize();if(n.dot(trimCenter.clone().sub(a))>0)n.negate();const edit=new SplatEdit({name:'Reversible room exterior crop',invert:true,softEdge:0.03}),shape=new SplatEditSdf({type:SplatEditSdfType.PLANE,opacity:0});shape.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),n);edit.add(shape);return{face,n,d:n.dot(a),edit,shape};});
 const trimWire=new THREE.LineSegments(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0x80ff80,depthTest:false}));cadScene.add(trimWire);
 function expandedTrimVertex(index,margin){const ps=trimPlanes.filter(p=>p.face.includes(index));if(ps.length!==3)throw Error('Expected three faces per core vertex');const [a,b,c]=ps,bc=b.n.clone().cross(c.n),ca=c.n.clone().cross(a.n),ab=a.n.clone().cross(b.n),det=a.n.dot(bc);if(Math.abs(det)<1e-8)throw Error('Degenerate core crop');return bc.multiplyScalar(a.d+margin).add(ca.multiplyScalar(b.d+margin)).add(ab.multiplyScalar(c.d+margin)).divideScalar(det);}
-function updateCrop(){const margin=+$('margin').value;$('marginValue').textContent=margin.toFixed(2);for(const p of trimPlanes){p.shape.position.copy(p.n).multiplyScalar(p.d+margin);if($('crop').checked&&!p.edit.parent)splat.add(p.edit);if(!$('crop').checked&&p.edit.parent)splat.remove(p.edit);}const v=coreData.vertices.map((_,i)=>expandedTrimVertex(i,margin)),edges=new Set(),points=[];for(const face of coreData.faces)for(let j=0;j<face.length;j++){const a=face[j],b=face[(j+1)%face.length],key=[a,b].sort((x,y)=>x-y).join(',');if(!edges.has(key)){edges.add(key);points.push(v[a],v[b]);}}trimWire.geometry.dispose();trimWire.geometry=new THREE.BufferGeometry().setFromPoints(points);trimWire.visible=$('cropBounds').checked;splat.updateVersion();}
+function updateCrop(){if(!cropSupported){trimWire.visible=false;return;}const margin=+$('margin').value;$('marginValue').textContent=margin.toFixed(2);for(const p of trimPlanes){p.shape.position.copy(p.n).multiplyScalar(p.d+margin);if($('crop').checked&&!p.edit.parent)splat.add(p.edit);if(!$('crop').checked&&p.edit.parent)splat.remove(p.edit);}const v=coreData.vertices.map((_,i)=>expandedTrimVertex(i,margin)),edges=new Set(),points=[];for(const face of coreData.faces)for(let j=0;j<face.length;j++){const a=face[j],b=face[(j+1)%face.length],key=[a,b].sort((x,y)=>x-y).join(',');if(!edges.has(key)){edges.add(key);points.push(v[a],v[b]);}}trimWire.geometry.dispose();trimWire.geometry=new THREE.BufferGeometry().setFromPoints(points);trimWire.visible=$('cropBounds').checked;splat.updateVersion();}
 ['crop','margin','cropBounds'].forEach(id=>$(id).oninput=updateCrop);updateCrop();
 
 const navBox=new THREE.Box3().setFromPoints(navigationPoints),navCenter=navBox.getCenter(new THREE.Vector3()),navHalf=navBox.getSize(new THREE.Vector3()).multiplyScalar(.5);const cropBox={center:navCenter.toArray(),half:navHalf.toArray(),axes:[[1,0,0],[0,1,0],[0,0,1]]};
@@ -78,8 +88,45 @@ const positions=frames.map(f=>new THREE.Vector3(...f.camera.extrinsics.position)
 const path=new THREE.Line(new THREE.BufferGeometry().setFromPoints(positions),new THREE.LineBasicMaterial({color:0x53dfc3,depthTest:false}));overlay.add(path);const cams=new THREE.Group();overlay.add(cams);
 function drawFrustums(){while(cams.children.length){let x=cams.children[0];x.geometry.dispose();x.material.dispose();cams.remove(x)}frames.forEach((f,i)=>{const p=f.camera.extrinsics.position,c=poseGeometry.corners(f.camera,+$('size').value),v=[];for(let j=0;j<4;j++)v.push(...p,...c[j],...c[j],...c[(j+1)%4]);const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));cams.add(new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:i===frame?0xffcd63:0x689baf,depthTest:false,transparent:true,opacity:i===frame?1:.5})))})}
 function resize(){renderer.setSize(stage.clientWidth,stage.clientHeight);if(!capture){camera.aspect=stage.clientWidth/stage.clientHeight;camera.updateProjectionMatrix()}}
-function fit(){capture=false;controls.enabled=true;camera.up.set(0,1,0);camera.fov=60;camera.position.copy(center).add(new THREE.Vector3(extent*.9,extent*.6,extent*.9));controls.target.copy(center);camera.lookAt(center);resize();$('capture').textContent='Capture view'}
+// Roomboard anchors use the unchanged native RUB scene coordinates.
+let flight=null;
+function validFlyMessage(event){
+ return event.source===window.parent&&
+  (event.origin===location.origin||event.origin==='https://danielesco1.github.io')&&
+  event.data?.type==='fly'&&Array.isArray(event.data.position)&&
+  event.data.position.length===3&&event.data.position.every(Number.isFinite);
+}
+function cancelFlight(){flight=null}
+function flyTo(position){
+ if(sectionDrag)return;
+ stop();
+ // Capture mode has a custom projection and stale orbit target; restore orbit first.
+ if(capture)fit();
+ capture=false;controls.enabled=true;camera.up.set(0,1,0);camera.fov=60;resize();
+ const target=new THREE.Vector3(...position),offset=camera.position.clone().sub(controls.target);
+ if(offset.lengthSq()<1e-12)offset.set(1,.5,1);
+ offset.setLength(Math.max(.1,Math.min(offset.length(),Math.max(extent*.25,.1))));
+ // Flush residual orbit damping before starting the deterministic transition.
+ const damping=controls.enableDamping;controls.enableDamping=false;controls.update();controls.enableDamping=damping;
+ flight={start:performance.now(),from:camera.position.clone(),targetFrom:controls.target.clone(),
+  to:target.clone().add(offset),target};
+ $('capture').textContent='Capture view';
+}
+function updateFlight(now){
+ if(!flight)return;
+ const t=Math.min(1,Math.max(0,(now-flight.start)/900)),ease=t*t*(3-2*t);
+ camera.position.lerpVectors(flight.from,flight.to,ease);
+ controls.target.lerpVectors(flight.targetFrom,flight.target,ease);
+ camera.lookAt(controls.target);
+ if(t===1)flight=null;
+}
+addEventListener('message',event=>{if(validFlyMessage(event))flyTo(event.data.position)});
+controls.addEventListener('start',cancelFlight);
+// Direct manipulation and existing buttons/sliders always take precedence.
+document.addEventListener('pointerdown',cancelFlight,true);
+document.addEventListener('keydown',cancelFlight,true);
+function fit(){cancelFlight();capture=false;controls.enabled=true;camera.up.set(0,1,0);camera.fov=60;camera.position.copy(center).add(new THREE.Vector3(extent*.9,extent*.6,extent*.9));controls.target.copy(center);camera.lookAt(center);resize();$('capture').textContent='Capture view'}
 function pose(){const c=frames[frame].camera,e=c.extrinsics,k=c.intrinsics;camera.position.fromArray(e.position);camera.quaternion.fromArray(e.quaternion);const n=.01;camera.projectionMatrix.makePerspective(-k.cx/k.fx*n,(k.width-k.cx)/k.fx*n,k.cy/k.fy*n,-(k.height-k.cy)/k.fy*n,n,1000);camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();camera.updateMatrixWorld()}
 function select(i){frame=i;$('scrub').value=i;const f=frames[i],c=f.camera;$('title').textContent=`Frame ${i+1} / ${frames.length}`;$('preview').src=f.thumbnail;$('time').textContent=f.source_time_seconds.toFixed(2)+'s';$('details').textContent=`Position: ${c.extrinsics.position.map(n=>n.toFixed(2)).join(', ')}\nGrid: ${c.intrinsics.width} × ${c.intrinsics.height}\nRUB · camera → world`;drawFrustums();if(capture)pose()}
 function stop(){playing=false;$('play').textContent='Play'}$('play').onclick=()=>{if(playing)return stop();if(frame===frames.length-1)select(0);playing=true;start=performance.now();startFrame=frame;$('play').textContent='Pause'};$('scrub').oninput=e=>{stop();select(+e.target.value)};$('fit').onclick=fit;$('capture').onclick=()=>{capture=true;controls.enabled=false;pose();$('capture').textContent='Capture view active'};$('overlay').onclick=()=>{showOverlay=!showOverlay;$('overlay').textContent='Cameras: '+(showOverlay?'on':'off')};$('splat').onclick=()=>{splat.visible=!splat.visible;$('splat').textContent='Splat: '+(splat.visible?'on':'off')};$('size').oninput=drawFrustums;addEventListener('resize',resize);
-fit();select(0);renderer.setAnimationLoop(now=>{if(playing){const t=frames[startFrame].source_time_seconds+(now-start)/1000;let next=frame;while(next<frames.length-1&&frames[next+1].source_time_seconds<=t)next++;if(next!==frame)select(next);if(frame===frames.length-1)stop()}if(!capture&&!sectionDrag)controls.update();const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);renderer.clear();if(capture){const k=frames[frame].camera.intrinsics,scale=Math.min(w/k.width,h/k.height),vw=k.width*scale,vh=k.height*scale;renderer.setViewport((w-vw)/2,(h-vh)/2,vw,vh)}renderer.clippingPlanes=[];renderer.render(scene,camera);renderer.clippingPlanes=$('sectionOverlays').checked&&sectionClip?[sectionClip]:[];renderer.clearDepth();renderer.render(cadScene,camera);if(showOverlay){renderer.clearDepth();renderer.render(overlay,camera)}renderer.clippingPlanes=[];renderer.clearDepth();renderer.render(sectionScene,camera);updateGumball()});window.viewerState=()=>({loaded,frame,capture,numSplats:splat.numSplats,showOverlay,shells:Object.fromEntries(Object.entries(shellGroups).map(([k,v])=>[k,v.group.visible]))});
+fit();select(0);renderer.setAnimationLoop(now=>{updateFlight(now);if(playing){const t=frames[startFrame].source_time_seconds+(now-start)/1000;let next=frame;while(next<frames.length-1&&frames[next+1].source_time_seconds<=t)next++;if(next!==frame)select(next);if(frame===frames.length-1)stop()}if(!capture&&!sectionDrag&&!flight)controls.update();const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);renderer.clear();if(capture){const k=frames[frame].camera.intrinsics,scale=Math.min(w/k.width,h/k.height),vw=k.width*scale,vh=k.height*scale;renderer.setViewport((w-vw)/2,(h-vh)/2,vw,vh)}renderer.clippingPlanes=[];renderer.render(scene,camera);renderer.clippingPlanes=$('sectionOverlays').checked&&sectionClip?[sectionClip]:[];renderer.clearDepth();renderer.render(cadScene,camera);if(showOverlay){renderer.clearDepth();renderer.render(overlay,camera)}renderer.clippingPlanes=[];renderer.clearDepth();renderer.render(sectionScene,camera);updateGumball()});window.viewerState=()=>({loaded,frame,capture,numSplats:splat.numSplats,showOverlay,shells:Object.fromEntries(Object.entries(shellGroups).map(([k,v])=>[k,v.group.visible]))});
