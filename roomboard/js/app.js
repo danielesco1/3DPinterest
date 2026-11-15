@@ -5,14 +5,14 @@ setModeAttr();
 const CHEV='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 8l4.5 4.5L14.5 8"/></svg>';
 const roomsN=id=>MEM[id]?MEM[id].size:0;
 function pillsHTML(){const ps=PINNED.map(proj).filter(Boolean);
- return ps.length?ps.map(p=>`<button type="button" class="chip pill" data-pid="${p.id}" aria-pressed="${p.id===ACTIVE}" style="--pc:${p.color}" title="Tap to save rooms here. Double-tap to see its rooms."><i></i>${esc(p.name)}<span class="pn">${roomsN(p.id)}</span></button>`).join(''):'<span class="pempty">No projects shown. Tick some under Projects.</span>'}
+ return ps.length?ps.map(p=>`<button type="button" class="chip pill" data-pid="${p.id}" aria-pressed="${p.id===ACTIVE}" style="--pc:${p.color}" title="Click to save rooms to ${esc(p.name)}. Double-click to see its rooms."><i></i>${esc(p.name)}<span class="pn">${roomsN(p.id)}</span></button>`).join(''):'<span class="pempty">No projects shown. Tick some under Projects.</span>'}
 function initNav(){$('#nav').innerHTML=`<button type="button" class="pdrop" aria-haspopup="dialog" aria-expanded="false">Projects${CHEV}</button><div class="pills" id="pills" role="group" aria-label="Shown projects"></div><button type="button" class="pcreate" aria-haspopup="dialog">+ Create</button>`;renderNav();
  let last={pid:null,t:0};
  $('#nav').addEventListener('click',e=>{const pill=e.target.closest('.pill');
   if(pill){const pid=pill.dataset.pid,now=performance.now();if(last.pid===pid&&now-last.t<400){last={pid:null,t:0};go('p:'+pid);return}last={pid,t:now};if(pid!==ACTIVE)setActive(pid);return}
   const d=e.target.closest('.pdrop'),c=e.target.closest('.pcreate');if(d)openProjList(d);else if(c)openCreate(c)})}
 function renderNav(){const pl=$('#pills');if(!pl)return;const sl=pl.scrollLeft;pl.innerHTML=pillsHTML();pl.scrollLeft=sl;const vc=$('.vaultbtn .vc');if(vc)vc.textContent=PROJECTS.length;hintTxt();markNav()}
-function hintTxt(){const h=$('#phint'),p=proj(ACTIVE);if(!h)return;h.innerHTML=p?`Rooms you save go to <b style="--pc:${p.color}"><i></i>${esc(p.name)}</b>. Tap a project to switch, double-tap to see its rooms.`:'Create a project to start saving rooms.'}
+function hintTxt(){const h=$('#phint');if(!h)return;const none=!PROJECTS.length;h.hidden=!none;h.textContent=none?'Create a project to start saving rooms.':''}
 function markNav(){const [v,id]=CUR.split(':'),vb=$('.vaultbtn');if(vb)vb.classList.toggle('on',v==='vault'||v==='v');document.querySelectorAll('.pill').forEach(b=>b.classList.toggle('open',v==='p'&&b.dataset.pid===id))}
 function setActive(pid){ACTIVE=pid;savePins();document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pid===pid));hintTxt();refreshBms();const sel=$('form.cap select[name="project"]');if(sel)sel.value=pid}
 /* Small popovers anchored under a bar button; they scroll with the page */
@@ -87,8 +87,8 @@ const SCAN='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V4.5A1.5 1.
 const toksHTML=()=>FILT.toks.map((t,i)=>`<button type="button" class="tok" data-rm="${i}" aria-label="Remove ${esc(t.v)}">${t.k==='place'?'in ':''}${esc(t.v)}<span aria-hidden="true">×</span></button>`).join('');
 const kwChip=c=>`<button type="button" class="kwc" data-tk="${c.k}" data-tv="${esc(c.v)}" aria-pressed="${hasTok(c.k,c.v)}">${esc(c.v)}<span>${c.n}</span></button>`;
 function findBar(){return `<div class="find"><div class="frow2"><div class="search" id="search" role="search">${MAG}<span class="toks" id="toks"></span><input id="q" type="search" enterkeyhint="search" value="${esc(FILT.q)}" aria-label="Search spaces" autocomplete="off"><button type="button" class="sclear" aria-label="Clear search">×</button></div>
- <button type="button" class="btn capbtn" data-go="capture">${SCAN}Capture a room</button></div>
- <div class="browse"><span class="b-l">Browse</span><div class="bcats" role="group" aria-label="Browse by category">${CATS.map(([k,l])=>`<button type="button" class="bcat" data-cat="${k}" aria-pressed="false">${l}</button>`).join('')}</div></div><div class="bkw" id="bkw" hidden></div></div>`}
+ <button type="button" class="btn capbtn" data-go="capture">${SCAN}Make a room</button></div>
+ <div class="bkw" id="bkw" hidden></div></div>`}
 function bindFind(F){const box=$('.find'),q=$('#q'),bkw=$('#bkw');let tm;
  const draw=()=>{$('#toks').innerHTML=toksHTML();q.placeholder=FILT.toks.length?'Add another keyword':'Search keywords, places, types';box.querySelector('.sclear').hidden=!(FILT.q||FILT.toks.length);
   const typed=FILT.q.trim(),list=typed?suggest(typed):BCAT?chipsFor(BCAT):null;bkw.hidden=!list;
@@ -106,7 +106,7 @@ function bindFind(F){const box=$('.find'),q=$('#q'),bkw=$('#bkw');let tm;
   else if(b.classList.contains('sclear')){FILT.q='';FILT.toks=[];q.value='';draw();run();q.focus()}});
  $('#search').addEventListener('click',e=>{if(!e.target.closest('button'))q.focus()})}
 const VIEWS={
- feed(m){m.innerHTML=`<p class="intro">Find a room to build around.</p><p class="lede">Rooms people loved, with their real size, height and doors. Search by keyword, browse by category, or capture one of your own.</p>${findBar()}${filterBar()}${ihead}<div class="feed" id="g"></div>`;bindFind(filteredFeed($('#g'),ALL(),card,{search:true}))},
+ feed(m){m.innerHTML=`<p class="intro">Find a room to build around.</p><p class="lede">Rooms people loved, with their real size, height and doors. Search by keyword, or make one of your own.</p>${findBar()}${filterBar()}${ihead}<div class="feed" id="g"></div>`;bindFind(filteredFeed($('#g'),ALL(),card,{search:true}))},
  project(m,p){const ss=inProject(p.id);m.innerHTML=`<button class="back" data-go="feed">← Find a room</button><p class="intro"><span class="pdot" style="background:${p.color}"></span>${esc(p.name)}</p><p class="lede">${p.note?p.note+' ':''}${ss.length} spaces, ${totalArea(ss)} collected.</p><div class="btns" style="margin:4px 0 6px"><button class="btn" data-go="v:${p.id}">Open in Board →</button></div>${filterBar()}${ihead}<div class="feed" id="g"></div>`;filteredFeed($('#g'),ss,card)},
  space(m,s){m.innerHTML=`<button class="back" data-go="back">← Back</button><div class="detail">${heroPane(s)}
  <div class="info"><span class="eyebrow">${s.tag} · sheet ${sheetNo(s)}</span><h2>${s.name}</h2><p class="meta">${s.place} · ${savedTxt(s)}</p>
@@ -117,6 +117,6 @@ const VIEWS={
  <div class="pane"><small>Plan · ${scaleTxt(s)}</small><div class="planbig">${plan(s,{size:200,pad:26,dims:true})}</div></div>${volumePane(s)}</div>${moreLike(s)}`;bindMore(s)},
  vault(m){vaultView(m)},
  vproject(m,p){vaultProjectView(m,p)},
- capture(m){m.innerHTML=`<button class="back" data-go="back">← Back</button><p class="intro">Capture a space</p>${captureForm()}`}};
+ capture(m){m.innerHTML=`<button class="back" data-go="back">← Back</button><p class="intro">Make a room</p>${captureForm()}`}};
 
 loadRooms().then(boot);

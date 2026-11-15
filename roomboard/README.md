@@ -23,7 +23,7 @@ Test on a phone by opening the served address from the same Wi-Fi network.
 | Screen | What it does |
 | --- | --- |
 | Projects bar | Pills for the projects you choose to show (tick them in the Projects pulldown), plus Create. Tap a pill to make it the active project: the bookmark on any card saves into it. Double-tap a pill to open the project. Board has its own button in the header. |
-| Find a room | Endless feed of spaces. Search by text, or Browse keywords by category (Light, Materials, Mood, Features, Places) and stack them as tokens. Capture a room from here. Filter by type (room, corridor, threshold) and by size (long side, short side, height, within a tolerance), in feet or metres. Three views: Images (masonry), Index (list), Plans (drawing sheets). |
+| Find a room | Endless feed of spaces. Search by text, or Browse keywords by category (Light, Materials, Mood, Features, Places) and stack them as tokens. Make a room from here. Filter by type (room, corridor, threshold) and by size (long side, short side, height, within a tolerance), in feet or metres. Three views: Images (masonry), Index (list), Plans (drawing sheets). |
 | Project | The spaces saved to one project, with the same filter and views. |
 | Space | Photo, measurements, plan, spinning volume, Highlights (keywords from the scan narration), the projects it belongs to, and More like this (similar size or similar feel). |
 | Board | One card per project with a top-down plan of its current layout. |
