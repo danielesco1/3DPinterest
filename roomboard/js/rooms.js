@@ -13,7 +13,14 @@ function loadRooms(){
     SPACES.unshift({...s,scanned:true,thumb:s.thumb?ROOMS_URL+s.id+'/'+s.thumb:null,saved:s.saved||'Scanned',keywords:s.keywords||[],
       project:proj(s.project)?s.project:PROJECTS[0].id});
   })})
-  .catch(()=>{});
+  .catch(()=>{})
+  .then(loadPlaceTags);
+}
+/* Photo-only places with narration: keywords come from rooms/<tagsFolder>/tags.json (same format as scans). */
+function loadPlaceTags(){
+ return Promise.all(SPACES.filter(s=>s.tagsFolder).map(s=>fetch(ROOMS_URL+s.tagsFolder+'/tags.json',{cache:'no-cache'})
+  .then(r=>r.ok?r.json():null).then(tg=>{if(!tg)return;const k=[];(tg.anchors||[]).forEach(a=>(a.tags||[]).forEach(x=>{if(!k.includes(x))k.push(x)}));
+   s.keywords=k;s.anchors=tg.anchors||[]}).catch(()=>{})));
 }
 
 /* Scanned rooms: the hero image becomes the 3D splat viewer, and keywords with an anchor fly the camera there. */
