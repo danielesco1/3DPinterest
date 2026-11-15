@@ -10,10 +10,19 @@ function loadRooms(){
    .then(([sp,tg])=>sp&&{...sp,anchors:(tg&&tg.anchors)||[]}))))
   .then(list=>{list.filter(Boolean).forEach(s=>{
     if(SPACES.some(x=>x.id===s.id))return;
-    SPACES.unshift({...s,scanned:true,thumb:s.thumb?ROOMS_URL+s.id+'/'+s.thumb:null,saved:s.saved||'Scanned',keywords:s.keywords||[],
+    SPACES.unshift({...s,scanned:true,thumb:s.thumb?(/^https:\/\//.test(s.thumb)?s.thumb:ROOMS_URL+s.id+'/'+s.thumb):null,saved:s.saved||'Scanned',keywords:s.keywords||[],
       project:proj(s.project)?s.project:PROJECTS[0].id});
+    // Scanned rooms that name a project start out saved in it (like the built-in places).
+    if(proj(s.project)&&MEM[s.project])MEM[s.project].add(s.id);
   })})
-  .catch(()=>{});
+  .catch(()=>{})
+  .then(loadPlaceTags);
+}
+/* Photo-only places with narration: keywords come from rooms/<tagsFolder>/tags.json (same format as scans). */
+function loadPlaceTags(){
+ return Promise.all(SPACES.filter(s=>s.tagsFolder).map(s=>fetch(ROOMS_URL+s.tagsFolder+'/tags.json',{cache:'no-cache'})
+  .then(r=>r.ok?r.json():null).then(tg=>{if(!tg)return;const k=[];(tg.anchors||[]).forEach(a=>(a.tags||[]).forEach(x=>{if(!k.includes(x))k.push(x)}));
+   s.keywords=k;s.anchors=tg.anchors||[]}).catch(()=>{})));
 }
 
 /* Scanned rooms: the hero image becomes the 3D splat viewer, and keywords with an anchor fly the camera there. */
@@ -35,3 +44,11 @@ function flyFrom(el){const f=document.getElementById('scanview');if(!f||!f.conte
  f.contentWindow.postMessage({type:'fly',position},new URL(f.src,location.href).origin)}
 document.addEventListener('click',e=>{const el=e.target.closest('[data-fly]');if(el)flyFrom(el)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const el=e.target.closest&&e.target.closest('[data-fly]');if(el){e.preventDefault();flyFrom(el)}}});
+
+/* Scanned rooms show the CAD volume drawing from their scene folder (core-volume.svg next to the viewer).
+   Other places keep the drawn box. A space.json can also name volume_svg directly. */
+function volumeSrc(s){if(!s.scanned)return null;if(s.volume_svg)return s.volume_svg;
+ const v=s.viewer&&/^https:\/\/.+\/index\.html$/.test(s.viewer)?s.viewer:null;return v?v.replace(/index\.html$/,'core-volume.svg'):null}
+function volumePane(s){const src=volumeSrc(s);
+ if(!src)return `<div class="pane"><small>Volume</small>${box3d(s)}</div>`;
+ return `<div class="pane"><small>Volume · CAD, est. scale</small><img src="${esc(src)}" alt="CAD volume drawing of ${esc(s.name)}" loading="lazy" style="display:block;width:100%;height:auto;max-height:420px;object-fit:contain"></div>`}
