@@ -135,9 +135,9 @@ fit();select(0);
 if(document.documentElement.classList.contains('embed')){
  if(showOverlay)$('overlay').click();
  $('core').checked=false;coreGroup.visible=false;
- const e=frames[Math.floor(frames.length/2)].camera.extrinsics,p=new THREE.Vector3(...e.position);
- const fw=new THREE.Vector3(0,0,-1).applyQuaternion(new THREE.Quaternion(...e.quaternion));fw.y=0;
- if(fw.lengthSq()<1e-6)fw.set(0,0,-1);fw.normalize();
- camera.position.copy(p);controls.target.copy(p).addScaledVector(fw,2);camera.lookAt(controls.target);controls.update();
+ // Stand at the end of the walk farthest from the path centre, slightly raised, looking back across the room.
+ const far=positions.reduce((a,b)=>b.distanceTo(center)>a.distanceTo(center)?b:a,positions[0]);
+ const back=far.clone().sub(center);back.y=0;if(back.lengthSq()<1e-6)back.set(1,0,1);back.setLength(.4);
+ camera.position.copy(far).add(back).add(new THREE.Vector3(0,.35,0));controls.target.copy(center);camera.lookAt(center);controls.update();
 }
 renderer.setAnimationLoop(now=>{updateFlight(now);if(playing){const t=frames[startFrame].source_time_seconds+(now-start)/1000;let next=frame;while(next<frames.length-1&&frames[next+1].source_time_seconds<=t)next++;if(next!==frame)select(next);if(frame===frames.length-1)stop()}if(!capture&&!sectionDrag&&!flight)controls.update();const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);renderer.clear();if(capture){const k=frames[frame].camera.intrinsics,scale=Math.min(w/k.width,h/k.height),vw=k.width*scale,vh=k.height*scale;renderer.setViewport((w-vw)/2,(h-vh)/2,vw,vh)}renderer.clippingPlanes=[];renderer.render(scene,camera);renderer.clippingPlanes=$('sectionOverlays').checked&&sectionClip?[sectionClip]:[];renderer.clearDepth();renderer.render(cadScene,camera);if(showOverlay){renderer.clearDepth();renderer.render(overlay,camera)}renderer.clippingPlanes=[];renderer.clearDepth();renderer.render(sectionScene,camera);updateGumball()});window.viewerState=()=>({loaded,frame,capture,numSplats:splat.numSplats,showOverlay,shells:Object.fromEntries(Object.entries(shellGroups).map(([k,v])=>[k,v.group.visible]))});
