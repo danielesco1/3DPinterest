@@ -25,7 +25,7 @@ function refreshBms(){document.querySelectorAll('.bm[data-save]').forEach(el=>{c
 function quickSave(sid){const P=proj(ACTIVE),set=MEM[P.id]||(MEM[P.id]=new Set()),on=!set.has(sid);on?set.add(sid):set.delete(sid);persistMem();refreshSaved(sid);toast(on?`Saved to ${P.name}`:`Removed from ${P.name}`)}
 function toast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.append(t)}t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1800)}
 function refreshSaved(sid){document.querySelectorAll(`[data-save="${sid}"]`).forEach(el=>{el.setAttribute('aria-pressed',el.classList.contains('bm')?bmOn(sid):inAny(sid));const l=el.querySelector('.s-lbl');if(l)l.textContent=saveLabel(sid)});
- const pl=$('#inprojects');if(pl&&pl.dataset.sid===sid)pl.innerHTML=projChips(space(sid));renderNav();if(VAULT_API)VAULT_API.sync();if(CUR==='feed'&&FILT.scope==='proj'&&SCOPE_APPLY)SCOPE_APPLY()}
+ const pl=$('#inprojects');if(pl&&pl.dataset.sid===sid)pl.innerHTML=projChips(space(sid));renderNav();if(VAULT_API)VAULT_API.sync();if(CUR==='feed'&&FILT.scope!=='all'&&SCOPE_APPLY)SCOPE_APPLY()}
 const saveLabel=sid=>{const n=projsOf(space(sid)).length;return n?`Saved in ${n} project${n>1?'s':''}`:'Save to project'};
 const projChips=s=>projsOf(s).map(p=>`<button type="button" class="pchip" data-go="p:${p.id}" style="--pc:${p.color}"><i></i>${p.name}</button>`).join('')||'<span class="hl-src">Not in a project yet</span>';
 let POP=null;
