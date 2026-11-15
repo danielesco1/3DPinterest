@@ -63,7 +63,7 @@ def scene_config(scene_id, static=False, scene_ids=None):
     cfg.pop('assets', None)  # Do not publish local filesystem details.
     return dict(cfg, id=scene_id, scenes=[
         {'id': key, 'title': SCENES[key]['title'],
-         'url': f'../{key}/' if static else f'/scene/{key}/'}
+         'url': f'../{key}/index.html' if static else f'/scene/{key}/'}
         for key in (scene_ids or SCENES)])
 
 
