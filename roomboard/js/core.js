@@ -135,7 +135,7 @@ function feed(box,items,card,{batch=8}={}){let list=items,n=0,gen=0,busy=false;
 const lazy=feed;
 
 /* Placeholder "photo": a lit room in the space's hue (stands in for the scan snapshot) */
-function photo(s){const h=s.hue;return `background:linear-gradient(to top,hsl(${h} 18% 26% / .55) 0 26%,transparent 26.5%),radial-gradient(70% 55% at 72% 22%,hsl(${h} 70% 94% / .95),transparent 60%),linear-gradient(165deg,hsl(${h} 32% 74%),hsl(${(h+18)%360} 26% 36%))`}
+function photo(s){const h=s.hue;if(s.thumb)return `background:url("${encodeURI(s.thumb)}") center/cover no-repeat,hsl(${h} 20% 50%)`;return `background:linear-gradient(to top,hsl(${h} 18% 26% / .55) 0 26%,transparent 26.5%),radial-gradient(70% 55% at 72% 22%,hsl(${h} 70% 94% / .95),transparent 60%),linear-gradient(165deg,hsl(${h} 32% 74%),hsl(${(h+18)%360} 26% 36%))`}
 
 /* 2D plan from the record: walls, door gaps, door swings, optional dimensions */
 function plan(s,{size=120,pad=10,sw=1.5,dims=false}={}){

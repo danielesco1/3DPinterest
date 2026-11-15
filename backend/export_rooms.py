@@ -69,6 +69,7 @@ def space_record(space, tags):
         'keywords': keywords,
         'hue': space.get('hue', 200),
         'saved': space.get('saved', ''),
+        'thumb': space.get('thumb'),  # photo file in the room folder, e.g. thumb.jpg (a frame from the scan video)
         'source': {'tags_file': 'tags.json', 'splat': space.get('splat')},
     }
 
