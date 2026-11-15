@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id),stage=$('stage');
 const config=await(await fetch('./scene.json')).json();
 $('sceneTitle').textContent=config.title;
 $('geometryNotes').textContent=config.notes;
-$('diagnostics').hidden=config.adapter==='astra-shell';
+$('diagnostics').hidden=config.adapter==='astra-shell'||config.diagnostics===false;
 for(const item of config.scenes){const option=new Option(item.title,item.url);option.selected=item.id===config.id;$('scenePicker').add(option)}
 $('scenePicker').onchange=e=>location.assign(e.target.value);
 const data=await(await fetch('./viewer-data.json')).json(),frames=data.frames;

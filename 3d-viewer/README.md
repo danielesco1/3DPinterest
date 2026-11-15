@@ -67,7 +67,7 @@ python3 -m http.server 8000 --directory 3d-viewer/dist
 Upload only the validated generated scene folders. These commands publish the scene assets to the existing public bucket; they do not alter bucket IAM or CORS. Run with an authorized signed-in gcloud account:
 
 ```sh
-for scene in first-room hotel; do
+for scene in first-room hotel bookstore; do
   for ext in html js cjs json svg spz png; do
     case "$ext" in
       html) mime=text/html;;
@@ -96,3 +96,5 @@ In the existing `rooms/hiroto-space/space.json`, preserve every other field and 
 Upload the edited metadata with `gcloud storage cp space.json gs://roomboard-demo-rooms/rooms/hiroto-space/space.json --cache-control=no-cache --content-type=application/json`. Rooms without `viewer` retain the old renderer. Highlight messages target the iframe's actual origin. The advanced viewer accepts finite native-coordinate `fly` messages only from its parent at its own origin or `https://danielesco1.github.io`. A localhost Roomboard parent cannot control a GCS-hosted iframe; use a same-origin local static viewer for local testing.
 
 Verify after deployment: open Hiroto on GitHub Pages, click `window-view`, confirm smooth camera motion, inspect browser errors, switch to Hotel and back, exercise timeline, capture, crop and section controls. Export success and unit tests alone do not establish live deployment success. Dimensions remain **uncalibrated estimates**.
+
+Bookstore restore:  uses the same core-envelope file contract as Hotel, without optional diagnostics. Restore its curated Astra CAD , , , camera , SPZ, empty partial/provisional JSON and vendor bundles. These remain inferred LOD100 geometry in unchanged native coordinates. The static scene is .
