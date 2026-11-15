@@ -12,7 +12,7 @@ SCENES = {
     'first-room': {'title': 'First room', 'assets': 'work/pose-viewer', 'adapter': 'astra-shell', 'labelScale': 0.35,
                    'notes': 'Astra estimated shell. All corners and openings are inferred, not surveyed. Cyan outlines are not cut holes. Original observed window sills retained. Feet/inches assume 1 native unit = 1 metre, UNVERIFIED. Source geometry unchanged.'},
     'hotel': {'title': 'Hotel', 'assets': 'work/hotel-advanced-viewer', 'adapter': 'core-envelope',
-              'notes': 'Provisional core; inferred closure. Blue: supported wall directions. Orange dashed: inferred connections. Cyan openings are not cut holes. All lower opening outlines extend to fitted floor by request; observed vertices retained separately. Feet/inches assume 1 native unit = 1 metre, UNVERIFIED.'},
+              'notes': 'Provisional core; inferred closure. Blue: supported wall directions. Orange dashed: inferred connections. Opening cuts render when the scene includes a surface mesh; otherwise cyan outlines are shown. All lower opening outlines extend to fitted floor by request; observed vertices retained separately. Feet/inches assume 1 native unit = 1 metre, UNVERIFIED.'},
 }
 SOURCE_FILES = {'index.html', 'app.js', 'geometry.cjs', 'section.cjs'}
 VENDOR_FILES = {'OrbitControls.js', 'Pass.js', 'spark.module.js', 'three.core.js', 'three.module.js'}
