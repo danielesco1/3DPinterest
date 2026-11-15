@@ -12,7 +12,7 @@ function initNav(){$('#nav').innerHTML=`<button type="button" class="pdrop" aria
  $('#nav').addEventListener('click',e=>{const pill=e.target.closest('.pill');
   if(pill){const pid=pill.dataset.pid,now=performance.now();if(last.pid===pid&&now-last.t<400){last={pid:null,t:0};go('p:'+pid);return}last={pid,t:now};if(pid!==ACTIVE)setActive(pid);return}
   const d=e.target.closest('.pdrop'),c=e.target.closest('.pcreate');if(d)openProjList(d);else if(c)openCreate(c)})}
-function renderNav(){const pl=$('#pills');if(!pl)return;const sl=pl.scrollLeft;pl.innerHTML=pillsHTML();pl.scrollLeft=sl;const vc=$('.vaultbtn .vc');if(vc)vc.textContent=PROJECTS.length;hintTxt();markNav()}
+function renderNav(){const pl=$('#pills');if(!pl)return;if(PINNED.length&&!PINNED.includes(ACTIVE)&&proj(PINNED[0])){ACTIVE=PINNED[0];savePins();if(typeof refreshBms==='function')refreshBms()}const sl=pl.scrollLeft;pl.innerHTML=pillsHTML();pl.scrollLeft=sl;const vc=$('.vaultbtn .vc');if(vc)vc.textContent=PROJECTS.length;hintTxt();markNav()}
 function hintTxt(){const h=$('#phint');if(!h)return;const none=!PROJECTS.length;h.hidden=!none;h.textContent=none?'Create a project to start saving rooms.':''}
 function markNav(){const [v,id]=CUR.split(':'),vb=$('.vaultbtn');if(vb)vb.classList.toggle('on',v==='vault'||v==='v');document.querySelectorAll('.pill').forEach(b=>b.classList.toggle('open',v==='p'&&b.dataset.pid===id))}
 function setActive(pid){ACTIVE=pid;savePins();document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pid===pid));hintTxt();refreshBms();const sel=$('form.cap select[name="project"]');if(sel)sel.value=pid}
