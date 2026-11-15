@@ -1,0 +1,29 @@
+{
+  "ceiling": {
+    "ray": "up"
+  },
+  "chandelier": {
+    "drop": true,
+    "why": "no chandelier visible in the video near the spoken word"
+  },
+  "restaurant-bar": {
+    "drop": true,
+    "why": "trimmed to the three strongest hotel tags for the demo"
+  },
+  "curtains": {
+    "drop": true,
+    "why": "trimmed to the three strongest hotel tags for the demo"
+  },
+  "palette": {
+    "drop": true,
+    "why": "trimmed to the three strongest hotel tags for the demo"
+  },
+  "tables": {
+    "drop": true,
+    "why": "trimmed to the three strongest hotel tags for the demo"
+  },
+  "bar-counter": {
+    "drop": true,
+    "why": "trimmed to the three strongest hotel tags for the demo"
+  }
+}

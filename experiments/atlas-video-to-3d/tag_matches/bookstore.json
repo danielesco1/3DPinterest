@@ -1,0 +1,36 @@
+{
+  "walls": {
+    "sample_keywords": [
+      "brick"
+    ],
+    "surfaces": [
+      "W07",
+      "W01"
+    ]
+  },
+  "ceiling": {
+    "sample_keywords": [
+      "beam",
+      "timber"
+    ],
+    "surfaces": [
+      "CEILING"
+    ]
+  },
+  "floor": {
+    "keep": true,
+    "why": "CAD floor sample view was too close to read; existing view kept"
+  },
+  "atrium-lighting": {
+    "drop": true,
+    "why": "trimmed to the three strongest bookstore tags for the demo"
+  },
+  "lighting": {
+    "drop": true,
+    "why": "trimmed to the three strongest bookstore tags for the demo"
+  },
+  "overall": {
+    "drop": true,
+    "why": "trimmed to the three strongest bookstore tags for the demo"
+  }
+}
