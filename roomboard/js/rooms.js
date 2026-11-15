@@ -58,6 +58,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const e
    Other places keep the drawn box. A space.json can also name volume_svg directly. */
 function volumeSrc(s){if(!s.scanned)return null;if(s.volume_svg)return s.volume_svg;
  const v=s.viewer&&/^https:\/\/.+\/index\.html$/.test(s.viewer)?s.viewer:null;return v?v.replace(/index\.html$/,'core-volume.svg'):null}
+/* Scanned rooms also show the CAD floor plan (core-plan.svg next to the viewer); others keep the drawn plan. */
+function planSrc(s){if(!s.scanned)return null;if(s.plan_svg)return s.plan_svg;
+ const v=s.viewer&&/^https:\/\/.+\/index\.html$/.test(s.viewer)?s.viewer:null;return v?v.replace(/index\.html$/,'core-plan.svg'):null}
+function planPane(s,fallback){const src=planSrc(s);
+ if(!src)return fallback;
+ return `<div class="pane"><small>Plan · CAD, est. scale</small><img src="${esc(src)}" alt="CAD floor plan of ${esc(s.name)}" loading="lazy" style="display:block;width:100%;height:auto;max-height:420px;object-fit:contain"></div>`}
 function volumePane(s){const src=volumeSrc(s);
  if(!src)return `<div class="pane"><small>Volume</small>${box3d(s)}</div>`;
  return `<div class="pane"><small>Volume · CAD, est. scale</small><img src="${esc(src)}" alt="CAD volume drawing of ${esc(s.name)}" loading="lazy" style="display:block;width:100%;height:auto;max-height:420px;object-fit:contain"></div>`}
