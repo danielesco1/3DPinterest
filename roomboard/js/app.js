@@ -87,7 +87,7 @@ const SCAN='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V4.5A1.5 1.
 const toksHTML=()=>FILT.toks.map((t,i)=>`<button type="button" class="tok" data-rm="${i}" aria-label="Remove ${esc(t.v)}">${t.k==='place'?'in ':''}${esc(t.v)}<span aria-hidden="true">×</span></button>`).join('');
 const kwChip=c=>`<button type="button" class="kwc" data-tk="${c.k}" data-tv="${esc(c.v)}" aria-pressed="${hasTok(c.k,c.v)}">${esc(c.v)}<span>${c.n}</span></button>`;
 function findBar(){return `<div class="find"><div class="frow2"><div class="search" id="search" role="search">${MAG}<span class="toks" id="toks"></span><input id="q" type="search" enterkeyhint="search" value="${esc(FILT.q)}" aria-label="Search spaces" autocomplete="off"><button type="button" class="sclear" aria-label="Clear search">×</button></div>
- <button type="button" class="btn capbtn" data-go="capture">${SCAN}Capture a room</button></div>
+ <button type="button" class="btn capbtn" data-go="capture">${SCAN}Make a room</button></div>
  <div class="browse"><span class="b-l">Browse</span><div class="bcats" role="group" aria-label="Browse by category">${CATS.map(([k,l])=>`<button type="button" class="bcat" data-cat="${k}" aria-pressed="false">${l}</button>`).join('')}</div></div><div class="bkw" id="bkw" hidden></div></div>`}
 function bindFind(F){const box=$('.find'),q=$('#q'),bkw=$('#bkw');let tm;
  const draw=()=>{$('#toks').innerHTML=toksHTML();q.placeholder=FILT.toks.length?'Add another keyword':'Search keywords, places, types';box.querySelector('.sclear').hidden=!(FILT.q||FILT.toks.length);
