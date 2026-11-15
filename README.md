@@ -1,27 +1,20 @@
 # 3DPinterest
 
-Experiments for turning video captures of real spaces into navigable 3D scenes.
+Video captures of real spaces, reconstructed as navigable 3D scenes.
 
-## Where the work is
+## Layout
 
-The first video-to-3D experiment (World Labs Atlas: frame prep, capture pipeline, packaging) lives on the `experiment/atlas-video-to-3d` branch for now:
+- `roomboard/`: static gallery and room pages.
+- `3d-viewer/`: shared Spark viewer and static scene exporter.
+- `experiments/atlas-video-to-3d/`: Atlas reconstruction, Astra geometry, drawings and per-space publishing pipeline. See its [standard workflow](experiments/atlas-video-to-3d/STANDARD_WORKFLOW.md).
 
-```sh
-git fetch
-git checkout experiment/atlas-video-to-3d
-```
-
-Setup steps are in `experiments/atlas-video-to-3d/README.md` on that branch.
-
-## Quick check
-
-On the experiment branch, with Python 3:
+## Tests
 
 ```sh
 cd experiments/atlas-video-to-3d
 python3 -m unittest discover -p "test_*.py"
 ```
 
-## Notes
+## Private assets
 
-- Keep API keys in `.env`. Never commit them.
+Keep API keys in ignored `.env` files and scene assets in ignored `work/` folders. Assets are published separately to Drive or the configured storage bucket, never to Git. Geometry and dimensions are uncalibrated estimates requiring review.

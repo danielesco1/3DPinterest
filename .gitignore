@@ -1,1 +1,7 @@
 roomboard/rooms/
+.env
+.env.*
+!.env.example
+__pycache__/
+.DS_Store
+experiments/atlas-video-to-3d/work/
