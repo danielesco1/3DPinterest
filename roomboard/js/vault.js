@@ -2,7 +2,8 @@
 const PCOLORS=['#c2410c','#1d4ed8','#047857','#7c3aed','#b45309','#be185d','#0e7490','#4d7c0f'];
 const TAGCOL={corridor:'#64748b',threshold:'#d97706'};
 const ls={get(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-ls.get('rb-projects',[]).forEach(p=>{if(p&&p.id&&!PROJECTS.find(q=>q.id===p.id))PROJECTS.push(p)});
+ls.get('rb-projects',[]).forEach(p=>{if(!p||!p.id)return;const q=PROJECTS.find(x=>x.id===p.id);if(q){if(p.name)q.name=p.name}else PROJECTS.push(p)});
+ls.get('rb-deleted',[]).forEach(id=>{const k=PROJECTS.findIndex(p=>p.id===id);if(k>=0)PROJECTS.splice(k,1)});
 const MEM=(()=>{const m=ls.get('rb-mem',null),seed={},out={},gone=id=>/^c\d+$/.test(id);
  PROJECTS.forEach(p=>out[p.id]=new Set((m&&m[p.id]?m[p.id]:SPACES.filter(s=>s.project===p.id).map(s=>s.id).concat(seed[p.id]||[])).filter(id=>!gone(id))));return out})();
 function persistMem(){const o={};for(const k in MEM)o[k]=[...MEM[k]];ls.set('rb-mem',o);ls.set('rb-projects',PROJECTS.map(({id,name,note,color})=>({id,name,note,color})))}
@@ -15,6 +16,12 @@ function addTo(pid,sid){(MEM[pid]||(MEM[pid]=new Set())).add(sid);persistMem()}
 let PINNED=(()=>{const v=ls.get('rb-pinned',null);return Array.isArray(v)?v.filter(id=>proj(id)):PROJECTS.map(p=>p.id)})();
 let ACTIVE=(()=>{const v=ls.get('rb-active',null);return proj(v)?v:(PROJECTS[0]||{}).id||null})();
 const savePins=()=>{ls.set('rb-pinned',PINNED);ls.set('rb-active',ACTIVE)};
+function renameProject(id,name){const p=proj(id);if(!p)return;p.name=name;persistMem();renderNav();refreshBms()}
+function deleteProject(id){const k=PROJECTS.findIndex(p=>p.id===id);if(k<0)return;PROJECTS.splice(k,1);delete MEM[id];
+ const d=ls.get('rb-deleted',[]);if(!d.includes(id)){d.push(id);ls.set('rb-deleted',d)}
+ if(typeof VL!=='undefined'&&VL[id]){delete VL[id];saveVL()}
+ PINNED=PINNED.filter(x=>x!==id);if(ACTIVE===id)ACTIVE=(PROJECTS[0]||{}).id||null;savePins();persistMem();renderNav();refreshBms();
+ if(CUR==='p:'+id||CUR==='v:'+id)go('feed',false);else if(CUR==='vault')go('vault',false)}
 function newProject(name){const id='p'+Date.now().toString(36),p={id,name,note:'',color:PCOLORS[PROJECTS.length%PCOLORS.length]};PROJECTS.push(p);MEM[id]=new Set();PINNED.push(id);savePins();persistMem();renderNav();return p}
 const BM_ICON='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 3h9v14l-4.5-3.4L5.5 17z"/></svg>';
 /* The card bookmark saves straight into the active project; with no active project it opens Save to */
