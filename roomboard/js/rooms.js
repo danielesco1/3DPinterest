@@ -16,12 +16,12 @@ function loadRooms(){
   .catch(()=>{});
 }
 
-/* Scanned rooms: the Volume pane becomes the 3D splat viewer, and keywords with an anchor fly the camera there. */
+/* Scanned rooms: the hero image becomes the 3D splat viewer, and keywords with an anchor fly the camera there. */
 const anchorFor=(s,k)=>(s.anchors||[]).find(a=>Array.isArray(a.position)&&a.position.every(n=>typeof n==='number')&&(a.tags||[]).includes(k));
 function kwItem(s,k){const a=s.scanned&&anchorFor(s,k);
  return a?`<li role="button" tabindex="0" data-fly="${a.position.join(',')}" title="Show in 3D" style="cursor:pointer">${esc(k)} ↗</li>`:`<li>${esc(k)}</li>`}
-function volPane(s){if(!s.scanned)return `<div class="pane"><small>Volume</small>${box3d(s)}</div>`;
- return `<div class="pane"><small>3D scan · est. scale</small><iframe id="scanview" src="viewer.html?room=${encodeURIComponent(s.id)}" title="3D scan of ${esc(s.name)}" style="display:block;width:100%;aspect-ratio:4/3;border:0;border-radius:8px" allow="fullscreen"></iframe></div>`}
+function heroPane(s){if(!s.scanned)return `<div class="hero" style="${photo(s)}"></div>`;
+ return `<div class="hero" style="position:relative;overflow:hidden;background:#111"><iframe id="scanview" src="viewer.html?room=${encodeURIComponent(s.id)}" title="3D scan of ${esc(s.name)}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="fullscreen"></iframe></div>`}
 function flyFrom(el){const f=document.getElementById('scanview');if(!f||!f.contentWindow)return;
  f.contentWindow.postMessage({type:'fly',position:el.dataset.fly.split(',').map(Number)},location.origin)}
 document.addEventListener('click',e=>{const el=e.target.closest('[data-fly]');if(el)flyFrom(el)});
