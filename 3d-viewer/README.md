@@ -97,4 +97,4 @@ Upload the edited metadata with `gcloud storage cp space.json gs://roomboard-dem
 
 Verify after deployment: open Hiroto on GitHub Pages, click `window-view`, confirm smooth camera motion, inspect browser errors, switch to Hotel and back, exercise timeline, capture, crop and section controls. Export success and unit tests alone do not establish live deployment success. Dimensions remain **uncalibrated estimates**.
 
-Bookstore restore:  uses the same core-envelope file contract as Hotel, without optional diagnostics. Restore its curated Astra CAD , , , camera , SPZ, empty partial/provisional JSON and vendor bundles. These remain inferred LOD100 geometry in unchanged native coordinates. The static scene is .
+Bookstore restore: `work/bookstore-concept/` uses the same core-envelope file contract as Hotel, without optional diagnostics. Restore its curated Astra CAD `core-envelope.json`, `core-plan.svg`, `core-volume.svg`, camera `viewer-data.json`, SPZ, empty partial/provisional JSON and vendor bundles. These remain inferred LOD100 geometry in unchanged native coordinates. The static scene is `scenes/bookstore/`.
