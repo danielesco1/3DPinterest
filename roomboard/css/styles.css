@@ -136,14 +136,17 @@ form.cap button{background:var(--accent);color:var(--on-accent);border:0;border-
 img{max-width:100%}
 
 /* HEADER: Vault sits apart from the projects, on the right */
-header{flex-wrap:nowrap}.logo{min-width:0}
+header{flex-wrap:nowrap}.logo{min-width:0;flex:none}
 .vaultbtn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:var(--chip-radius);padding:8px 10px 8px 12px;font:600 13.5px var(--font-body);cursor:pointer;flex:none}
 .vaultbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}
 .vaultbtn .vc{min-width:20px;padding:1px 6px;border-radius:999px;background:var(--hover);color:var(--muted);font-size:11px;text-align:center;font-variant-numeric:tabular-nums}
 .vaultbtn.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.vaultbtn.on .vc{background:var(--bg);color:var(--fg)}
 
 /* PROJECTS BAR: pulldown, pills, Create */
-.pbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding-block:14px 0}
+.pbar{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;padding-block:14px 0}
+header .pbar{flex:1;min-width:0;padding:0;margin-inline:16px}
+.pl-foot{flex-wrap:wrap}.pl-foot .pl-new{flex-basis:100%;font-weight:600}
+@media(max-width:720px){header{flex-wrap:wrap}header .pbar{order:3;flex-basis:100%;margin:10px 0 0}}
 .pills{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-width:0;padding:3px}
 .pills::-webkit-scrollbar{display:none}
 .pdrop,.pcreate{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:var(--chip-radius);padding:7px 12px;font:600 13px var(--font-body);cursor:pointer;white-space:nowrap}
