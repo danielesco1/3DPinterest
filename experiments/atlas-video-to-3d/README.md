@@ -1,6 +1,6 @@
 # First Atlas video-to-3D test
 
-Status: scaffold only. No project video uploaded and no reconstruction run.
+For the reusable per-space pipeline, start with [Standard workflow](STANDARD_WORKFLOW.md). The steps below describe the original first-test setup, not current run status.
 
 Atlas uses selected stills, not a raw-video reconstruction endpoint. The result is a navigable Gaussian splat, not guaranteed measured CAD.
 

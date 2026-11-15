@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "video": "work/inputs/example.mov",
+  "space": "example-space",
+  "take": "take-001",
+  "output_root": "work/runs",
+  "interval": 1,
+  "max_frames": 60,
+  "grid": [720, 1280]
+}
