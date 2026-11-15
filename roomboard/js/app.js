@@ -6,7 +6,7 @@ const CHEV='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 8l4.5 4.5L
 const roomsN=id=>MEM[id]?MEM[id].size:0;
 function pillsHTML(){const ps=PINNED.map(proj).filter(Boolean);
  return ps.length?ps.map(p=>`<button type="button" class="chip pill" data-pid="${p.id}" aria-pressed="${p.id===ACTIVE}" style="--pc:${p.color}" title="Click to save rooms to ${esc(p.name)}. Double-click to see its rooms."><i></i>${esc(p.name)}<span class="pn">${roomsN(p.id)}</span></button>`).join(''):'<span class="pempty">No projects shown. Tick some under Projects.</span>'}
-function initNav(){$('#nav').innerHTML=`<button type="button" class="pdrop" aria-haspopup="dialog" aria-expanded="false">Projects${CHEV}</button><div class="pills" id="pills" role="group" aria-label="Shown projects"></div>`;renderNav();
+function initNav(){$('#nav').innerHTML=`<button type="button" class="pdrop" aria-haspopup="dialog" aria-expanded="false">Projects${CHEV}</button><div class="pills" id="pills" role="group" aria-label="Shown projects"></div><button type="button" class="pcreate" aria-haspopup="dialog">+ New project</button>`;renderNav();
  let last={pid:null,t:0};
  $('#nav').addEventListener('click',e=>{const pill=e.target.closest('.pill');
   if(pill){const pid=pill.dataset.pid,now=performance.now();if(last.pid===pid&&now-last.t<400){last={pid:null,t:0};go('p:'+pid);return}last={pid,t:now};if(pid!==ACTIVE)setActive(pid);return}
