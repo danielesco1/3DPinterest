@@ -1,20 +1,21 @@
 /* ---------- Roomboard app: cards for the three view modes, similar-spaces feed, screens, boot ---------- */
 setModeAttr();
-/* Projects bar: pulldown of every project (tick which show as pills), the pills, and Create.
-   Tap a pill to make it the active project (saved rooms go there). Double-tap to open it. */
+/* Projects bar: pulldown of every project (tick which show as pills), the pills, and New project.
+   Pills filter the feed: All, or one project's rooms. Double-click a project pill to open its page. */
 const CHEV='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 8l4.5 4.5L14.5 8"/></svg>';
 const roomsN=id=>MEM[id]?MEM[id].size:0;
 function pillsHTML(){const ps=PINNED.map(proj).filter(Boolean);
- return ps.length?ps.map(p=>`<button type="button" class="chip pill" data-pid="${p.id}" aria-pressed="${p.id===ACTIVE}" style="--pc:${p.color}" title="Click to save rooms to ${esc(p.name)}. Double-click to see its rooms."><i></i>${esc(p.name)}<span class="pn">${roomsN(p.id)}</span></button>`).join(''):'<span class="pempty">No projects shown. Tick some under Projects.</span>'}
+ return `<button type="button" class="chip pill pall" data-pid="all" aria-pressed="${FILT.scope==='all'}" title="Show every room">All</button>`+ps.map(p=>`<button type="button" class="chip pill" data-pid="${p.id}" aria-pressed="${p.id===FILT.scope}" style="--pc:${p.color}" title="Show only ${esc(p.name)}. Double-click to open the project."><i></i>${esc(p.name)}<span class="pn">${roomsN(p.id)}</span></button>`).join('')+(ps.length?'':'<span class="pempty">Tick projects under Projects to show them here.</span>')}
+function setScope(pid){FILT.scope=pid;document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pid===pid));if(pid!=='all'){ACTIVE=pid;savePins()}if(CUR==='feed'){if(SCOPE_APPLY)SCOPE_APPLY()}else go('feed')}
 function initNav(){$('#nav').innerHTML=`<button type="button" class="pdrop" aria-haspopup="dialog" aria-expanded="false">Projects${CHEV}</button><div class="pills" id="pills" role="group" aria-label="Shown projects"></div><button type="button" class="pcreate" aria-haspopup="dialog">+ New project</button>`;renderNav();
  let last={pid:null,t:0};
  $('#nav').addEventListener('click',e=>{const pill=e.target.closest('.pill');
-  if(pill){const pid=pill.dataset.pid,now=performance.now();if(last.pid===pid&&now-last.t<400){last={pid:null,t:0};go('p:'+pid);return}last={pid,t:now};if(pid!==ACTIVE)setActive(pid);return}
+  if(pill){const pid=pill.dataset.pid,now=performance.now();if(pid!=='all'&&last.pid===pid&&now-last.t<400){last={pid:null,t:0};go('p:'+pid);return}last={pid,t:now};if(pid!==FILT.scope||CUR!=='feed')setScope(pid);return}
   const d=e.target.closest('.pdrop'),c=e.target.closest('.pcreate');if(d)openProjList(d);else if(c)openCreate(c)})}
-function renderNav(){const pl=$('#pills');if(!pl)return;const sl=pl.scrollLeft;pl.innerHTML=pillsHTML();pl.scrollLeft=sl;const vc=$('.vaultbtn .vc');if(vc)vc.textContent=PROJECTS.length;hintTxt();markNav()}
+function renderNav(){const pl=$('#pills');if(!pl)return;if(FILT.scope!=='all'&&!(PINNED.includes(FILT.scope)&&proj(FILT.scope))){FILT.scope='all';if(CUR==='feed'&&SCOPE_APPLY)SCOPE_APPLY()}const sl=pl.scrollLeft;pl.innerHTML=pillsHTML();pl.scrollLeft=sl;const vc=$('.vaultbtn .vc');if(vc)vc.textContent=PROJECTS.length;hintTxt();markNav()}
 function hintTxt(){const h=$('#phint');if(!h)return;const none=!PROJECTS.length;h.hidden=!none;h.textContent=none?'Create a project to start saving rooms.':''}
 function markNav(){const [v,id]=CUR.split(':'),vb=$('.vaultbtn');if(vb)vb.classList.toggle('on',v==='vault'||v==='v');document.querySelectorAll('.pill').forEach(b=>b.classList.toggle('open',v==='p'&&b.dataset.pid===id))}
-function setActive(pid){ACTIVE=pid;savePins();const fs=$('.fscope [data-scope="proj"]'),p=proj(pid);if(fs&&p)fs.innerHTML=`<i style="background:${p.color}"></i><span class="fsn">${esc(p.name)}</span>`;if(CUR==='feed'&&FILT.scope==='proj'&&SCOPE_APPLY)SCOPE_APPLY();document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pid===pid));hintTxt();refreshBms();const sel=$('form.cap select[name="project"]');if(sel)sel.value=pid}
+function setActive(pid){ACTIVE=pid;savePins();hintTxt();refreshBms();const sel=$('form.cap select[name="project"]');if(sel)sel.value=pid}
 /* Small popovers anchored under a bar button; they scroll with the page */
 let NPOP=null;
 function closeNPop(){if(!NPOP)return;NPOP.a.setAttribute('aria-expanded','false');NPOP.el.remove();NPOP=null;document.removeEventListener('pointerdown',npOut,true)}
@@ -24,7 +25,7 @@ function openNPop(a,cls,label,html,bind){const was=NPOP&&NPOP.a===a;closeNPop();
  const r=a.getBoundingClientRect(),pw=Math.min(300,innerWidth-24),left=Math.min(Math.max(12,r.left),innerWidth-pw-12);
  Object.assign(el.style,{left:(left+scrollX)+'px',top:(r.bottom+8+scrollY)+'px',width:pw+'px'});anim(el,[{opacity:0,transform:'translateY(-6px) scale(.98)'},{opacity:1,transform:'none'}],{duration:180,easing:'ease-out'});
  el.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNPop();a.focus()}});bind(el);setTimeout(()=>document.addEventListener('pointerdown',npOut,true))}
-function openProjList(a){openNPop(a,'plist','Your projects',`<div class="sp-h">Show on the landing page</div><div class="sp-list">${PROJECTS.map(p=>`<div class="pl-row"><label class="pl-item"><input type="checkbox" data-pin="${p.id}" ${PINNED.includes(p.id)?'checked':''}><i style="background:${p.color}"></i><span class="sp-name">${esc(p.name)}${p.id===ACTIVE?' <em>active</em>':''}</span><span class="sp-n">${roomsN(p.id)}</span></label><button type="button" class="pl-open" data-open="${p.id}">Open</button></div>`).join('')}</div><div class="pl-foot"><button type="button" data-all="1">Show all</button><button type="button" data-all="0">Hide all</button><button type="button" class="pl-new" data-new="1">+ New project</button></div>`,el=>{
+function openProjList(a){openNPop(a,'plist','Your projects',`<div class="sp-h">Show on the landing page</div><div class="sp-list">${PROJECTS.map(p=>`<div class="pl-row"><label class="pl-item"><input type="checkbox" data-pin="${p.id}" ${PINNED.includes(p.id)?'checked':''}><i style="background:${p.color}"></i><span class="sp-name">${esc(p.name)}</span><span class="sp-n">${roomsN(p.id)}</span></label><button type="button" class="pl-open" data-open="${p.id}">Open</button></div>`).join('')}</div><div class="pl-foot"><button type="button" data-all="1">Show all</button><button type="button" data-all="0">Hide all</button><button type="button" class="pl-new" data-new="1">+ New project</button></div>`,el=>{
  el.addEventListener('change',e=>{const id=e.target.dataset.pin;if(!id)return;PINNED=e.target.checked?PROJECTS.map(p=>p.id).filter(x=>x===id||PINNED.includes(x)):PINNED.filter(x=>x!==id);savePins();renderNav()});
  el.addEventListener('click',e=>{if(e.target.closest('[data-new]')){closeNPop();openCreate(a);return}const o=e.target.closest('[data-open]');if(o){closeNPop();setActive(o.dataset.open);go('p:'+o.dataset.open);return}
   const al=e.target.closest('[data-all]');if(al){const on=al.dataset.all==='1';PINNED=on?PROJECTS.map(p=>p.id):[];savePins();el.querySelectorAll('[data-pin]').forEach(c=>c.checked=on);renderNav()}});

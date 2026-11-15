@@ -17,16 +17,16 @@ let ACTIVE=(()=>{const v=ls.get('rb-active',null);return proj(v)?v:(PROJECTS[0]|
 const savePins=()=>{ls.set('rb-pinned',PINNED);ls.set('rb-active',ACTIVE)};
 function newProject(name){const id='p'+Date.now().toString(36),p={id,name,note:'',color:PCOLORS[PROJECTS.length%PCOLORS.length]};PROJECTS.push(p);MEM[id]=new Set();PINNED.push(id);savePins();persistMem();renderNav();return p}
 const BM_ICON='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 3h9v14l-4.5-3.4L5.5 17z"/></svg>';
-/* The card bookmark saves straight into the active project; with no active project it opens Save to */
-const bmOn=sid=>ACTIVE&&proj(ACTIVE)?inBoard(ACTIVE,sid):inAny(sid);
-const bmLabel=s=>ACTIVE&&proj(ACTIVE)?`Save ${s.name} to ${proj(ACTIVE).name}`:`Save ${s.name} to a project`;
+/* The card bookmark opens Save to, so you always pick the project */
+const bmOn=sid=>inAny(sid);
+const bmLabel=s=>`Save ${s.name} to a project`;
 const bm=s=>`<span class="bm" role="button" tabindex="0" data-save="${s.id}" aria-pressed="${bmOn(s.id)}" aria-label="${bmLabel(s)}">${BM_ICON}</span>`;
 function refreshBms(){document.querySelectorAll('.bm[data-save]').forEach(el=>{const s=space(el.dataset.save);if(!s)return;el.setAttribute('aria-pressed',bmOn(s.id));el.setAttribute('aria-label',bmLabel(s))})}
 function quickSave(sid){const P=proj(ACTIVE),set=MEM[P.id]||(MEM[P.id]=new Set()),on=!set.has(sid);on?set.add(sid):set.delete(sid);persistMem();refreshSaved(sid);toast(on?`Saved to ${P.name}`:`Removed from ${P.name}`)}
 function toast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.append(t)}t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1800)}
 function refreshSaved(sid){document.querySelectorAll(`[data-save="${sid}"]`).forEach(el=>{el.setAttribute('aria-pressed',el.classList.contains('bm')?bmOn(sid):inAny(sid));const l=el.querySelector('.s-lbl');if(l)l.textContent=saveLabel(sid)});
- const pl=$('#inprojects');if(pl&&pl.dataset.sid===sid)pl.innerHTML=projChips(space(sid));renderNav();if(VAULT_API)VAULT_API.sync();if(CUR==='feed'&&FILT.scope==='proj'&&SCOPE_APPLY)SCOPE_APPLY()}
-const saveLabel=sid=>{const n=projsOf(space(sid)).length;return n?`Saved in ${n} project${n>1?'s':''}`:'Save to project'};
+ const pl=$('#inprojects');if(pl&&pl.dataset.sid===sid)pl.innerHTML=projChips(space(sid));renderNav();if(VAULT_API)VAULT_API.sync();if(CUR==='feed'&&FILT.scope!=='all'&&SCOPE_APPLY)SCOPE_APPLY()}
+const saveLabel=sid=>{const ps=projsOf(space(sid)),n=ps.length;return n===1?`Saved to ${ps[0].name}`:n?`Saved in ${n} projects`:'Save to project'};
 const projChips=s=>projsOf(s).map(p=>`<button type="button" class="pchip" data-go="p:${p.id}" style="--pc:${p.color}"><i></i>${p.name}</button>`).join('')||'<span class="hl-src">Not in a project yet</span>';
 let POP=null;
 function closeSave(){if(POP){POP.remove();POP=null;document.removeEventListener('pointerdown',outside,true)}}
@@ -42,8 +42,8 @@ function openSave(anchor,sid){closeSave();const pop=document.createElement('div'
  pop.addEventListener('submit',e=>{e.preventDefault();const v=pop.querySelector('input').value.trim();if(!v)return;const p=newProject(v);addTo(p.id,sid);draw();refreshSaved(sid);toast(`Created ${p.name} and saved`)});
  pop.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSave();anchor.focus()}});
  setTimeout(()=>document.addEventListener('pointerdown',outside,true));(pop.querySelector('.sp-item')||pop.querySelector('input')).focus({preventScroll:true})}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-save]');if(!b)return;e.preventDefault();e.stopPropagation();if(b.classList.contains('bm')&&ACTIVE&&proj(ACTIVE)){quickSave(b.dataset.save);return}if(POP&&POP._sid===b.dataset.save){closeSave();return}openSave(b,b.dataset.save);POP._sid=b.dataset.save},true);
-document.addEventListener('keydown',e=>{const t=e.target;if((e.key==='Enter'||e.key===' ')&&t.dataset&&t.dataset.save&&t.tagName!=='BUTTON'){e.preventDefault();e.stopPropagation();if(t.classList.contains('bm')&&ACTIVE&&proj(ACTIVE)){quickSave(t.dataset.save);return}openSave(t,t.dataset.save);POP._sid=t.dataset.save}},true);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-save]');if(!b)return;e.preventDefault();e.stopPropagation();if(POP&&POP._sid===b.dataset.save){closeSave();return}openSave(b,b.dataset.save);POP._sid=b.dataset.save},true);
+document.addEventListener('keydown',e=>{const t=e.target;if((e.key==='Enter'||e.key===' ')&&t.dataset&&t.dataset.save&&t.tagName!=='BUTTON'){e.preventDefault();e.stopPropagation();openSave(t,t.dataset.save);POP._sid=t.dataset.save}},true);
 addEventListener('scroll',()=>{if(POP)closeSave()},{passive:true});
 
 const THREE_URL='https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';
