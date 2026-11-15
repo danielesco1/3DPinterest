@@ -5,14 +5,14 @@ setModeAttr();
 const CHEV='<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 8l4.5 4.5L14.5 8"/></svg>';
 const roomsN=id=>MEM[id]?MEM[id].size:0;
 function pillsHTML(){const ps=PINNED.map(proj).filter(Boolean);
- return ps.length?ps.map(p=>`<button type="button" class="chip pill" data-pid="${p.id}" aria-pressed="${p.id===ACTIVE}" style="--pc:${p.color}" title="Tap to save rooms here. Double-tap to see its rooms."><i></i>${esc(p.name)}<span class="pn">${roomsN(p.id)}</span></button>`).join(''):'<span class="pempty">No projects shown. Tick some under Projects.</span>'}
+ return ps.length?ps.map(p=>`<button type="button" class="chip pill" data-pid="${p.id}" aria-pressed="${p.id===ACTIVE}" style="--pc:${p.color}" title="Click to save rooms to ${esc(p.name)}. Double-click to see its rooms."><i></i>${esc(p.name)}<span class="pn">${roomsN(p.id)}</span></button>`).join(''):'<span class="pempty">No projects shown. Tick some under Projects.</span>'}
 function initNav(){$('#nav').innerHTML=`<button type="button" class="pdrop" aria-haspopup="dialog" aria-expanded="false">Projects${CHEV}</button><div class="pills" id="pills" role="group" aria-label="Shown projects"></div><button type="button" class="pcreate" aria-haspopup="dialog">+ Create</button>`;renderNav();
  let last={pid:null,t:0};
  $('#nav').addEventListener('click',e=>{const pill=e.target.closest('.pill');
   if(pill){const pid=pill.dataset.pid,now=performance.now();if(last.pid===pid&&now-last.t<400){last={pid:null,t:0};go('p:'+pid);return}last={pid,t:now};if(pid!==ACTIVE)setActive(pid);return}
   const d=e.target.closest('.pdrop'),c=e.target.closest('.pcreate');if(d)openProjList(d);else if(c)openCreate(c)})}
 function renderNav(){const pl=$('#pills');if(!pl)return;const sl=pl.scrollLeft;pl.innerHTML=pillsHTML();pl.scrollLeft=sl;const vc=$('.vaultbtn .vc');if(vc)vc.textContent=PROJECTS.length;hintTxt();markNav()}
-function hintTxt(){const h=$('#phint'),p=proj(ACTIVE);if(!h)return;h.innerHTML=p?`Rooms you save go to <b style="--pc:${p.color}"><i></i>${esc(p.name)}</b>. Tap a project to switch, double-tap to see its rooms.`:'Create a project to start saving rooms.'}
+function hintTxt(){const h=$('#phint');if(!h)return;const none=!PROJECTS.length;h.hidden=!none;h.textContent=none?'Create a project to start saving rooms.':''}
 function markNav(){const [v,id]=CUR.split(':'),vb=$('.vaultbtn');if(vb)vb.classList.toggle('on',v==='vault'||v==='v');document.querySelectorAll('.pill').forEach(b=>b.classList.toggle('open',v==='p'&&b.dataset.pid===id))}
 function setActive(pid){ACTIVE=pid;savePins();document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pid===pid));hintTxt();refreshBms();const sel=$('form.cap select[name="project"]');if(sel)sel.value=pid}
 /* Small popovers anchored under a bar button; they scroll with the page */
