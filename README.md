@@ -63,6 +63,10 @@ Keep API keys in ignored `.env` files and scene assets in ignored `work/` folder
 
 Sizes from scans are uncalibrated and shown as "est." until a real site measurement is added.
 
+## Team
+
+Sae Kim, Hiroto Ito, Daniel Escobar and Rebecca Riggs.
+
 ## Known limitations
 
 - Scale is uncalibrated: scans are in scene units read as metres and shown as "est." until a site measurement is added.
