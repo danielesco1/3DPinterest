@@ -14,7 +14,7 @@ function initNav(){$('#nav').innerHTML=`<button type="button" class="pdrop" aria
 function renderNav(){const pl=$('#pills');if(!pl)return;const sl=pl.scrollLeft;pl.innerHTML=pillsHTML();pl.scrollLeft=sl;const vc=$('.vaultbtn .vc');if(vc)vc.textContent=PROJECTS.length;hintTxt();markNav()}
 function hintTxt(){const h=$('#phint');if(!h)return;const none=!PROJECTS.length;h.hidden=!none;h.textContent=none?'Create a project to start saving rooms.':''}
 function markNav(){const [v,id]=CUR.split(':'),vb=$('.vaultbtn');if(vb)vb.classList.toggle('on',v==='vault'||v==='v');document.querySelectorAll('.pill').forEach(b=>b.classList.toggle('open',v==='p'&&b.dataset.pid===id))}
-function setActive(pid){ACTIVE=pid;savePins();document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pid===pid));hintTxt();refreshBms();const sel=$('form.cap select[name="project"]');if(sel)sel.value=pid}
+function setActive(pid){ACTIVE=pid;savePins();const fs=$('.fscope [data-scope="proj"]'),p=proj(pid);if(fs&&p)fs.innerHTML=`<i style="background:${p.color}"></i><span class="fsn">${esc(p.name)}</span>`;if(CUR==='feed'&&FILT.scope==='proj'&&SCOPE_APPLY)SCOPE_APPLY();document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.pid===pid));hintTxt();refreshBms();const sel=$('form.cap select[name="project"]');if(sel)sel.value=pid}
 /* Small popovers anchored under a bar button; they scroll with the page */
 let NPOP=null;
 function closeNPop(){if(!NPOP)return;NPOP.a.setAttribute('aria-expanded','false');NPOP.el.remove();NPOP=null;document.removeEventListener('pointerdown',npOut,true)}
@@ -106,7 +106,7 @@ function bindFind(F){const box=$('.find'),q=$('#q'),bkw=$('#bkw');let tm;
   else if(b.classList.contains('sclear')){FILT.q='';FILT.toks=[];q.value='';draw();run();q.focus()}});
  $('#search').addEventListener('click',e=>{if(!e.target.closest('button'))q.focus()})}
 const VIEWS={
- feed(m){m.innerHTML=`<p class="intro">Find a room to build around.</p>${findBar()}${filterBar()}${ihead}<div class="feed" id="g"></div>`;bindFind(filteredFeed($('#g'),ALL(),card,{search:true}))},
+ feed(m){m.innerHTML=`<p class="intro">Find a room to build around.</p>${findBar()}${filterBar({scope:true})}${ihead}<div class="feed" id="g"></div>`;bindFind(filteredFeed($('#g'),ALL(),card,{search:true,scope:true}))},
  project(m,p){const ss=inProject(p.id);m.innerHTML=`<button class="back" data-go="feed">← Find a room</button><p class="intro"><span class="pdot" style="background:${p.color}"></span>${esc(p.name)}</p><p class="lede">${p.note?p.note+' ':''}${ss.length} spaces, ${totalArea(ss)} collected.</p><div class="btns" style="margin:4px 0 6px"><button class="btn" data-go="v:${p.id}">Open in Board →</button></div>${filterBar()}${ihead}<div class="feed" id="g"></div>`;filteredFeed($('#g'),ss,card)},
  space(m,s){m.innerHTML=`<button class="back" data-go="back">← Back</button><div class="detail">${heroPane(s)}
  <div class="info"><span class="eyebrow">${s.tag} · sheet ${sheetNo(s)}</span><h2>${s.name}</h2><p class="meta">${s.place} · ${savedTxt(s)}</p>

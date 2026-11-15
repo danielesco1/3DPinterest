@@ -57,7 +57,8 @@ const dims=s=>UNIT==='m'?`${s.w.toFixed(1)} × ${s.d.toFixed(1)} × ${s.h.toFixe
 const unitWord=()=>UNIT==='m'?'metres':'feet and inches';
 
 /* Filter: type, and long side / short side / height within a tolerance. Long/short ignore orientation. */
-const FILT={type:'all',L:'',S:'',H:'',tol:'',q:'',toks:[]};
+let SCOPE_APPLY=null;
+const FILT={scope:'all',type:'all',L:'',S:'',H:'',tol:'',q:'',toks:[]};
 let MODE=(()=>{try{return localStorage.getItem('sp-mode')||'images'}catch(e){return 'images'}})();
 const MODES=[['images','Images','<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="6.5" height="9" rx="1"/><rect x="11" y="2.5" width="6.5" height="5" rx="1"/><rect x="2.5" y="13.5" width="6.5" height="4" rx="1"/><rect x="11" y="9.5" width="6.5" height="8" rx="1"/></svg>'],['index','Index','<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 4.5h2M7 4.5h10.5M2.5 10h2M7 10h10.5M2.5 15.5h2M7 15.5h10.5"/></svg>'],['plans','Plans','<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 2.5h15v15h-15zM2.5 10h6M12 10h5.5M10 2.5v4"/><path d="M8.5 10a3.5 3.5 0 0 1 3.5-3.5" stroke-dasharray="1.5 1.5"/></svg>']];
 function setModeAttr(){document.body.dataset.mode=MODE}
@@ -70,18 +71,20 @@ function matches(s){if(FILT.type!=='all'&&s.tag!==FILT.type)return false;
 function sizeSummary(){const u=UNIT==='ft'?'′':' m',p=[];if(FILT.L!==''||FILT.S!=='')p.push(`${FILT.L||'any'} × ${FILT.S||'any'}${u}`);if(FILT.H!=='')p.push(`H ${FILT.H}${u}`);
  return p.length?p.join(', ')+` ±${FILT.tol||tolDefault()}${u}`:''}
 const TYPES=[['all','All types'],['room','Rooms'],['corridor','Corridors'],['threshold','Thresholds']];
-function filterBar(){const u=UNIT==='ft'?'ft':'m',ph=UNIT==='ft'?['20','13','10','2']:['6.1','4.0','3.0','0.6'];
+const scopeHTML=()=>{const p=typeof proj==='function'&&proj(ACTIVE);if(!p)return '';if(FILT.scope==='proj'&&!p)FILT.scope='all';return `<div class="fscope" role="group" aria-label="Show"><button type="button" data-scope="all" aria-pressed="${FILT.scope==='all'}">All rooms</button><button type="button" data-scope="proj" aria-pressed="${FILT.scope==='proj'}"><i style="background:${p.color}"></i><span class="fsn">${esc(p.name)}</span></button></div>`};
+function filterBar(o={}){const u=UNIT==='ft'?'ft':'m',ph=UNIT==='ft'?['20','13','10','2']:['6.1','4.0','3.0','0.6'];
  const inp=(k,lbl,i)=>`<label for="f-${k}">${lbl}<span class="in"><input id="f-${k}" data-k="${k}" type="number" inputmode="decimal" step="any" min="0" value="${FILT[k]}" placeholder="${ph[i]}"><span class="u">${u}</span></span></label>`;
  return `<div class="fbar" id="fbar"><div class="frow"><div class="ftypes" role="group" aria-label="Space type">${TYPES.map(([t,l])=>`<button type="button" class="ft" data-type="${t}" aria-pressed="${FILT.type===t}">${l}</button>`).join('')}</div>
- <button type="button" class="fsz" aria-expanded="false" aria-controls="fpanel" data-active="${sizeActive()}">Size<span class="fsum">${sizeActive()?' · '+sizeSummary():''}</span></button><span class="fcount" aria-live="polite"></span><div class="fmode" role="group" aria-label="View">${MODES.map(([k,l,ic])=>`<button type="button" data-mode="${k}" aria-pressed="${MODE===k}" aria-label="${l} view" title="${l}">${ic}</button>`).join('')}</div></div>
+ <button type="button" class="fsz" aria-expanded="false" aria-controls="fpanel" data-active="${sizeActive()}">Size<span class="fsum">${sizeActive()?' · '+sizeSummary():''}</span></button>${o.scope?scopeHTML():''}<span class="fcount" aria-live="polite"></span><div class="fmode" role="group" aria-label="View">${MODES.map(([k,l,ic])=>`<button type="button" data-mode="${k}" aria-pressed="${MODE===k}" aria-label="${l} view" title="${l}">${ic}</button>`).join('')}</div></div>
  <div class="fpanel" id="fpanel" hidden>${inp('L','Long side',0)}${inp('S','Short side',1)}${inp('H','Height',2)}${inp('tol','Within ±',3)}
  <div class="ftail"><div class="funit" role="group" aria-label="Units"><button type="button" data-unit="ft" aria-pressed="${UNIT==='ft'}">ft</button><button type="button" data-unit="m" aria-pressed="${UNIT==='m'}">m</button></div><button type="button" class="fclear">Clear size</button></div></div></div>`}
-function filteredFeed(box,base,card,opts={}){const bar=$('#fbar'),ok=s=>matches(s)&&(!opts.search||searchMatch(s));const F=feed(box,base.filter(ok),card,opts);
+function filteredFeed(box,base,card,opts={}){const bar=$('#fbar'),ok=s=>matches(s)&&(!opts.search||searchMatch(s))&&(!opts.scope||FILT.scope!=='proj'||inBoard(ACTIVE,s.id));const F=feed(box,base.filter(ok),card,opts);
  const count=(n=F.length())=>{bar.querySelector('.fcount').textContent=`${n.toLocaleString()} ${n===1?'space':'spaces'}`;
   const sz=bar.querySelector('.fsz');sz.dataset.active=sizeActive();sz.querySelector('.fsum').textContent=sizeActive()?' · '+sizeSummary():''};
- const apply=()=>{const nl=base.filter(ok);F.set(nl);count(nl.length)};count();F.apply=apply;
+ const apply=()=>{const nl=base.filter(ok);F.set(nl);count(nl.length)};count();F.apply=apply;if(opts.scope)SCOPE_APPLY=apply;
  bar.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
-  if(t.dataset.mode){if(t.dataset.mode===MODE)return;MODE=t.dataset.mode;try{localStorage.setItem('sp-mode',MODE)}catch(e){}bar.querySelectorAll('.fmode button').forEach(b=>b.setAttribute('aria-pressed',b===t));F.restyle(()=>setModeAttr())}
+  if(t.dataset.scope){if(t.dataset.scope===FILT.scope)return;FILT.scope=t.dataset.scope;bar.querySelectorAll('[data-scope]').forEach(b=>b.setAttribute('aria-pressed',b===t));apply()}
+  else if(t.dataset.mode){if(t.dataset.mode===MODE)return;MODE=t.dataset.mode;try{localStorage.setItem('sp-mode',MODE)}catch(e){}bar.querySelectorAll('.fmode button').forEach(b=>b.setAttribute('aria-pressed',b===t));F.restyle(()=>setModeAttr())}
   else if(t.dataset.type){FILT.type=t.dataset.type;bar.querySelectorAll('.ft').forEach(b=>b.setAttribute('aria-pressed',b===t));apply()}
   else if(t.classList.contains('fsz')){const p=$('#fpanel'),open=p.hidden;p.hidden=!open;t.setAttribute('aria-expanded',open);if(open){anim(p,[{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],{duration:200,easing:'ease-out'});p.querySelector('input').focus({preventScroll:true})}}
   else if(t.classList.contains('fclear')){FILT.L=FILT.S=FILT.H=FILT.tol='';bar.querySelectorAll('.fpanel input').forEach(i=>i.value='');apply()}
@@ -203,5 +206,12 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .fmode button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
 .fmode button[aria-pressed="true"]{background:var(--fb-accent);color:var(--fb-on)}
 .fmode button:focus-visible{outline:2px solid var(--fb-accent);outline-offset:1px}
+.fscope{display:flex;border:1px solid var(--fb-line);border-radius:var(--fb-radius,999px);background:var(--fb-card);padding:2px;gap:2px;flex:none;margin-left:auto}
+.fscope button{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:0;background:none;color:var(--fb-muted);border-radius:var(--fb-radius,999px);font:600 12.5px var(--font-body);cursor:pointer;white-space:nowrap;transition:background .2s,color .2s}
+.fscope button i{width:8px;height:8px;border-radius:50%;flex:none}
+.fscope .fsn{max-width:12ch;overflow:hidden;text-overflow:ellipsis}
+.fscope button[aria-pressed="true"]{background:var(--fb-accent);color:var(--fb-on)}
+.fscope button:focus-visible{outline:2px solid var(--fb-accent);outline-offset:1px}
+.fscope+.fcount{margin-left:0}
 @media(prefers-reduced-motion:reduce){.vbox,.skel{animation:none}}
 </style>`);
