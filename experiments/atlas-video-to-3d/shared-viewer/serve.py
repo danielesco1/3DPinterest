@@ -9,6 +9,7 @@ from urllib.parse import urlsplit
 HERE = Path(__file__).resolve().parent
 BASE = HERE.parent
 SCENES = {
+    'bookstore': {'title': 'Bookstore · camera poses', 'assets': 'work/runs/bookstore-01/img5411-take-001/shared-viewer', 'adapter': 'core-envelope', 'showCad': False, 'notes': 'Camera poses available. Splat pending. Optional CAD is partial depth-supported surfaces, not a closed room or verified LOD100 model.'},
     'first-room': {'title': 'First room', 'assets': 'work/pose-viewer', 'adapter': 'astra-shell', 'labelScale': 0.35,
                    'notes': 'Astra estimated shell. All corners and openings are inferred, not surveyed. Cyan outlines are not cut holes. Original observed window sills retained. Feet/inches assume 1 native unit = 1 metre, UNVERIFIED. Source geometry unchanged.'},
     'hotel': {'title': 'Hotel', 'assets': 'work/hotel-advanced-viewer', 'adapter': 'core-envelope',
@@ -78,7 +79,7 @@ class Handler(SimpleHTTPRequestHandler):
         name = '/'.join(parts[2:]) or 'index.html'
         try:
             if name == 'scene.json':
-                self.send_json(dict(cfg, id=scene_id, scenes=[
+                self.send_json(dict(cfg, id=scene_id, splat_available=(asset_root/'reconstruction.spz').is_file(), scenes=[
                     {'id': key, 'title': c['title'], 'url': f'/scene/{key}/'}
                     for key, c in SCENES.items()]))
                 return
