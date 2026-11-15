@@ -106,7 +106,7 @@ function bindFind(F){const box=$('.find'),q=$('#q'),bkw=$('#bkw');let tm;
   else if(b.classList.contains('sclear')){FILT.q='';FILT.toks=[];q.value='';draw();run();q.focus()}});
  $('#search').addEventListener('click',e=>{if(!e.target.closest('button'))q.focus()})}
 const VIEWS={
- feed(m){m.innerHTML=`<p class="intro">Find a room to build around.</p><p class="lede">Rooms people loved, with their real size, height and doors. Search by keyword, browse by category, or capture one of your own.</p>${findBar()}${filterBar()}${ihead}<div class="feed" id="g"></div>`;bindFind(filteredFeed($('#g'),ALL(),card,{search:true}))},
+ feed(m){m.innerHTML=`<p class="intro">Find a room to build around.</p><p class="lede">Rooms people loved, with their real size, height and doors. Search by keyword, or make one of your own.</p>${findBar()}${filterBar()}${ihead}<div class="feed" id="g"></div>`;bindFind(filteredFeed($('#g'),ALL(),card,{search:true}))},
  project(m,p){const ss=inProject(p.id);m.innerHTML=`<button class="back" data-go="feed">← Find a room</button><p class="intro"><span class="pdot" style="background:${p.color}"></span>${esc(p.name)}</p><p class="lede">${p.note?p.note+' ':''}${ss.length} spaces, ${totalArea(ss)} collected.</p><div class="btns" style="margin:4px 0 6px"><button class="btn" data-go="v:${p.id}">Open in Board →</button></div>${filterBar()}${ihead}<div class="feed" id="g"></div>`;filteredFeed($('#g'),ss,card)},
  space(m,s){m.innerHTML=`<button class="back" data-go="back">← Back</button><div class="detail">${heroPane(s)}
  <div class="info"><span class="eyebrow">${s.tag} · sheet ${sheetNo(s)}</span><h2>${s.name}</h2><p class="meta">${s.place} · ${savedTxt(s)}</p>
@@ -117,6 +117,6 @@ const VIEWS={
  <div class="pane"><small>Plan · ${scaleTxt(s)}</small><div class="planbig">${plan(s,{size:200,pad:26,dims:true})}</div></div>${volumePane(s)}</div>${moreLike(s)}`;bindMore(s)},
  vault(m){vaultView(m)},
  vproject(m,p){vaultProjectView(m,p)},
- capture(m){m.innerHTML=`<button class="back" data-go="back">← Back</button><p class="intro">Capture a space</p>${captureForm()}`}};
+ capture(m){m.innerHTML=`<button class="back" data-go="back">← Back</button><p class="intro">Make a room</p>${captureForm()}`}};
 
 loadRooms().then(boot);
