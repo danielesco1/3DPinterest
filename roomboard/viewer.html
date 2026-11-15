@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Roomboard viewer</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #111; overflow: hidden; }
+  html, body { margin: 0; height: 100%; background: #e5e7eb; overflow: hidden; }
   canvas { display: block; }
-  #status { position: fixed; left: 12px; bottom: 12px; color: #ddd; font: 13px system-ui, sans-serif; background: rgba(0,0,0,.5); padding: 6px 10px; border-radius: 6px; }
+  #status { position: fixed; left: 12px; bottom: 12px; color: #374151; font: 13px system-ui, sans-serif; background: rgba(255,255,255,.8); padding: 6px 10px; border-radius: 6px; }
 </style>
 <script type="importmap">
 {
@@ -38,6 +38,7 @@ camera.position.set(0.17, 1.5, 1.6); // inside the room, near the entry side
 const renderer = new THREE.WebGLRenderer({ antialias: false });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0xe5e7eb, 1); // light grey background, matching the shared viewer
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);

@@ -114,7 +114,7 @@ const VIEWS={
  ${s.keywords&&s.keywords.length?`<div class="hl"><div class="hl-h"><span class="eyebrow">Highlights</span><span class="hl-src">From the scan narration</span></div><ul class="kw">${s.keywords.map(k=>kwItem(s,k)).join('')}</ul></div>`:''}
  <div class="hl"><div class="hl-h"><span class="eyebrow">In projects</span></div><div class="inproj" id="inprojects" data-sid="${s.id}">${projChips(s)}</div></div>
  <div class="btns"><button class="btn" data-save="${s.id}" aria-pressed="${inAny(s.id)}" aria-haspopup="dialog"><span class="s-lbl">${saveLabel(s.id)}</span></button></div></div>
- <div class="pane"><small>Plan · ${scaleTxt(s)}</small><div class="planbig">${plan(s,{size:200,pad:26,dims:true})}</div></div><div class="pane"><small>Volume</small>${box3d(s)}</div></div>${moreLike(s)}`;bindMore(s)},
+ <div class="pane"><small>Plan · ${scaleTxt(s)}</small><div class="planbig">${plan(s,{size:200,pad:26,dims:true})}</div></div>${volumePane(s)}</div>${moreLike(s)}`;bindMore(s)},
  vault(m){vaultView(m)},
  vproject(m,p){vaultProjectView(m,p)},
  capture(m){m.innerHTML=`<button class="back" data-go="back">← Back</button><p class="intro">Capture a space</p>${captureForm()}`}};

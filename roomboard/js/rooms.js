@@ -44,3 +44,11 @@ function flyFrom(el){const f=document.getElementById('scanview');if(!f||!f.conte
  f.contentWindow.postMessage({type:'fly',position},new URL(f.src,location.href).origin)}
 document.addEventListener('click',e=>{const el=e.target.closest('[data-fly]');if(el)flyFrom(el)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const el=e.target.closest&&e.target.closest('[data-fly]');if(el){e.preventDefault();flyFrom(el)}}});
+
+/* Scanned rooms show the CAD volume drawing from their scene folder (core-volume.svg next to the viewer).
+   Other places keep the drawn box. A space.json can also name volume_svg directly. */
+function volumeSrc(s){if(!s.scanned)return null;if(s.volume_svg)return s.volume_svg;
+ const v=s.viewer&&/^https:\/\/.+\/index\.html$/.test(s.viewer)?s.viewer:null;return v?v.replace(/index\.html$/,'core-volume.svg'):null}
+function volumePane(s){const src=volumeSrc(s);
+ if(!src)return `<div class="pane"><small>Volume</small>${box3d(s)}</div>`;
+ return `<div class="pane"><small>Volume · CAD, est. scale</small><img src="${esc(src)}" alt="CAD volume drawing of ${esc(s.name)}" loading="lazy" style="display:block;width:100%;height:auto;max-height:420px;object-fit:contain"></div>`}
