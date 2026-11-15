@@ -104,10 +104,15 @@ def place(tags, env, vd, matches):
     elements = {o['tag']: o for o in env.get('opening_outlines', [])}
     elements.update({o['id']: o for o in env.get('secondary_architecture', [])})
     report = []
+    dropped = [k for k, v in matches.items() if v.get('drop')]
+    tags['anchors'] = [a for a in tags['anchors'] if a['anchor_id'] not in dropped]
+    for k in dropped: report.append((k, 'dropped', None))
     for a in tags['anchors']:
         m = matches.get(a['anchor_id'], {})
         t = m.get('time', spoken_time(a))
         placed = None
+        if m.get('keep'):
+            report.append((a['anchor_id'], 'kept', a['position'])); continue
         if m.get('sample_keywords'):
             cands = [(s, ev) for s, ev in samples
                      if any(k in (s.get('selection_id', '') + ' ' + ev.get('label', '')).lower() for k in m['sample_keywords'])
@@ -126,7 +131,9 @@ def place(tags, env, vd, matches):
             i = best_view(frames, c, [frame_index(x) for x in src] if src else None)
             placed = (c, i, f"cad_element: {m['element']} '{el.get('label') or el.get('kind')}' centre, viewed from its best source frame")
         if not placed and m.get('ray') in ('up', 'down'):
-            i = nearest_frame(frames, t); o = frames[i]['camera']['extrinsics']['position']
+            i = nearest_frame(frames, t); o, d = pixel_ray(frames[i]['camera'])
+            # start the vertical ray ahead of the narrator so the view tilts up/down instead of staring straight up
+            ahead = norm([d[0], 0, d[2]]); o = add(o, mul(ahead, m.get('ahead', 2.5)))
             hit = raycast(o, [0, 1 if m['ray'] == 'up' else -1, 0], tris)
             if hit:
                 placed = (hit, i, f"cad_surface: straight {m['ray']} from the narrator at {frames[i]['source_time_seconds']:.1f}s onto the CAD {'ceiling' if m['ray']=='up' else 'floor'}")

@@ -1,5 +1,9 @@
 {
   "ceiling": {
     "ray": "up"
+  },
+  "chandelier": {
+    "drop": true,
+    "why": "no chandelier visible in the video near the spoken word"
   }
 }

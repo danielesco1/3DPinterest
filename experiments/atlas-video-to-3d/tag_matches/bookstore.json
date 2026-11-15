@@ -18,12 +18,11 @@
     ]
   },
   "floor": {
-    "sample_keywords": [
-      "floor_tile"
-    ],
-    "element": "D01"
+    "keep": true,
+    "why": "CAD floor sample view was too close to read; existing view kept"
   },
   "atrium-lighting": {
-    "element": "STAIR_RAMP"
+    "keep": true,
+    "why": "existing camera-pose view looks better than the CAD stair proxy"
   }
 }
