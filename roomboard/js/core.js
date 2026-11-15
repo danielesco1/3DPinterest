@@ -3,52 +3,38 @@ const PROJECTS=[
  {id:'cafe',name:'Cafe idea',note:'A 40-seat counter cafe. Collecting rooms that feel generous but small.',color:'#c2410c'},
  {id:'living',name:'Living room',note:'Rethinking the apartment around one really good room.',color:'#1d4ed8'},
  {id:'lounge',name:'Hotel lounges',note:'Lobby and lounge spaces for a hospitality proposal.',color:'#047857'}];
+/* Places: real New York photos (Drive "thumbnails" folder), resized and served from the bucket.
+   They have no scan, so width, depth, height and doors are borrowed from the earlier sample rooms
+   and marked estimated. Replace with measured values when a place is captured. */
+const PHOTOS='https://storage.googleapis.com/roomboard-demo-rooms/photos/';
+const PL_=(id,name,file,project,w,d,h,doors,hue,saved)=>({id,name,place:'New York',project,tag:'room',w,d,h,doors,hue,saved,
+ thumb:PHOTOS+file,estimated:true,keywords:[]});
 const SPACES=[
- {id:'s1',name:'Window counter',place:'Williamsburg, NY',project:'cafe',tag:'room',w:6.2,d:3.4,h:4.1,doors:[{wall:'S',pos:.8,w:1.1}],hue:30,saved:'Nov 12'},
- {id:'s2',name:'Long bar room',place:'Lisbon',project:'cafe',tag:'room',w:9.5,d:4.2,h:3.6,doors:[{wall:'W',pos:.5,w:1.2},{wall:'N',pos:.85,w:.9}],hue:22,saved:'Nov 10'},
- {id:'s3',name:'Courtyard entry',place:'Kyoto',project:'cafe',tag:'threshold',w:2.4,d:3.0,h:2.7,doors:[{wall:'S',pos:.5,w:1.4},{wall:'N',pos:.5,w:1.0}],hue:95,saved:'Nov 8'},
- {id:'s4',name:'Back booth nook',place:'Copenhagen',project:'cafe',tag:'room',w:3.6,d:2.8,h:2.6,doors:[{wall:'E',pos:.3,w:.9}],hue:18,saved:'Nov 6'},
- {id:'s5',name:'Pastry passage',place:'Paris',project:'cafe',tag:'corridor',w:1.6,d:7.2,h:3.2,doors:[{wall:'N',pos:.5,w:1.0},{wall:'S',pos:.5,w:1.0}],hue:40,saved:'Nov 3'},
- {id:'s6',name:'Sunken lounge',place:'Hudson Valley, NY',project:'living',tag:'room',w:5.8,d:5.2,h:3.0,doors:[{wall:'W',pos:.2,w:1.0}],hue:200,saved:'Nov 11'},
- {id:'s7',name:'Library wall',place:'Tribeca, NY',project:'living',tag:'room',w:7.0,d:4.4,h:3.4,doors:[{wall:'S',pos:.15,w:.9},{wall:'E',pos:.6,w:1.2}],hue:215,saved:'Nov 9'},
- {id:'s8',name:'Gallery hall',place:'Brooklyn, NY',project:'living',tag:'corridor',w:1.4,d:8.5,h:2.8,doors:[{wall:'N',pos:.5,w:.9},{wall:'E',pos:.7,w:.9}],hue:190,saved:'Nov 5'},
- {id:'s9',name:'Bedroom suite',place:'Las Vegas',project:'living',tag:'room',w:4.8,d:5.6,h:2.9,doors:[{wall:'N',pos:.8,w:.9},{wall:'W',pos:.75,w:.8}],hue:265,saved:'Nov 1'},
- {id:'s10',name:'Double-height lobby',place:'Mexico City',project:'lounge',tag:'room',w:12.0,d:9.0,h:7.2,doors:[{wall:'S',pos:.5,w:2.4},{wall:'N',pos:.2,w:1.2}],hue:140,saved:'Nov 7'},
- {id:'s11',name:'Fireplace lounge',place:'Stowe, VT',project:'lounge',tag:'room',w:8.4,d:6.0,h:3.8,doors:[{wall:'E',pos:.5,w:1.6}],hue:12,saved:'Nov 4'},
- {id:'s12',name:'Velvet vestibule',place:'London',project:'lounge',tag:'threshold',w:3.2,d:2.2,h:3.0,doors:[{wall:'S',pos:.5,w:1.2},{wall:'N',pos:.5,w:1.6}],hue:330,saved:'Oct 30'}];
+ PL_('s1','Blue Bottle Coffee','blue-bottle-coffee.jpg','cafe',6.2,3.4,4.1,[{wall:'S',pos:.8,w:1.1}],30,'Nov 12'),
+ PL_('s2','NYC Bagel and Coffee House','nyc-bagel-and-coffee-house.jpg','cafe',9.5,4.2,3.6,[{wall:'W',pos:.5,w:1.2},{wall:'N',pos:.85,w:.9}],22,'Nov 10'),
+ PL_('s3','Juice Generation','juice-generation.jpg','cafe',2.4,3.0,2.7,[{wall:'S',pos:.5,w:1.4},{wall:'N',pos:.5,w:1.0}],95,'Nov 8'),
+ PL_('s4','Hungry Ghost Coffee','hungry-ghost-coffee.jpg','cafe',3.6,2.8,2.6,[{wall:'E',pos:.3,w:.9}],18,'Nov 6'),
+ PL_('s5','Pi Bakerie','pi-bakerie.jpg','cafe',1.6,7.2,3.2,[{wall:'N',pos:.5,w:1.0},{wall:'S',pos:.5,w:1.0}],40,'Nov 3'),
+ PL_('s6','120 W Broadway','120-w-broadway.jpg','living',5.8,5.2,3.0,[{wall:'W',pos:.2,w:1.0}],200,'Nov 11'),
+ PL_('s7','McNally Jackson Books Seaport','mcnally-jackson-books-seaport.jpg','living',7.0,4.4,3.4,[{wall:'S',pos:.15,w:.9},{wall:'E',pos:.6,w:1.2}],215,'Nov 9'),
+ PL_('s8','POP MART','pop-mart.jpg','living',1.4,8.5,2.8,[{wall:'N',pos:.5,w:.9},{wall:'E',pos:.7,w:.9}],190,'Nov 5'),
+ PL_('s9','Sam Edelman','sam-edelman.jpg','living',4.8,5.6,2.9,[{wall:'N',pos:.8,w:.9},{wall:'W',pos:.75,w:.8}],265,'Nov 1'),
+ PL_('s10','Four Seasons Hotel New York Downtown','four-seasons-hotel-new-york-downtown.jpg','lounge',12.0,9.0,7.2,[{wall:'S',pos:.5,w:2.4},{wall:'N',pos:.2,w:1.2}],140,'Nov 7'),
+ PL_('s11','M Social Hotel New York Downtown','m-social-hotel-new-york-downtown.jpg','lounge',8.4,6.0,3.8,[{wall:'E',pos:.5,w:1.6}],12,'Nov 4'),
+ PL_('s12','Ole and Steen','ole-and-steen.jpg','lounge',3.2,2.2,3.0,[{wall:'S',pos:.5,w:1.2},{wall:'N',pos:.5,w:1.6}],330,'Oct 30'),
+ PL_('s13','Oculus World Trade Center','oculus-world-trade-center.jpg',null,12.0,9.0,7.2,[{wall:'S',pos:.5,w:2.4},{wall:'N',pos:.2,w:1.2}],140,'Nov 14'),
+ PL_('s14',"St. Peter's Roman Catholic Church",'st-peters-roman-catholic-church.jpg',null,8.4,6.0,3.8,[{wall:'E',pos:.5,w:1.6}],12,'Nov 14'),
+ PL_('s15',"St. Paul's Chapel",'st-pauls-chapel.jpg',null,7.0,4.4,3.4,[{wall:'S',pos:.15,w:.9},{wall:'E',pos:.6,w:1.2}],215,'Nov 14'),
+ PL_('s16','Whole Foods Market','whole-foods-market.jpg',null,9.5,4.2,3.6,[{wall:'W',pos:.5,w:1.2},{wall:'N',pos:.85,w:.9}],22,'Nov 14'),
+ PL_('s17','Starbucks','starbucks.jpg',null,6.2,3.4,4.1,[{wall:'S',pos:.8,w:1.1}],30,'Nov 14'),
+ PL_('s18','Shake Shack','shake-shack.jpg',null,5.8,5.2,3.0,[{wall:'W',pos:.2,w:1.0}],200,'Nov 14'),
+ PL_('s19','Cortlandt Eatery','cortlandt-eatery.jpg',null,3.6,2.8,2.6,[{wall:'E',pos:.3,w:.9}],18,'Nov 14'),
+ PL_('s20','Pret A Manger','pret-a-manger.jpg',null,4.8,5.6,2.9,[{wall:'N',pos:.8,w:.9},{wall:'W',pos:.75,w:.8}],265,'Nov 14'),
+ PL_('s21','I Love NY Gift Shop','i-love-ny-gift-shop.jpg',null,3.2,2.2,3.0,[{wall:'S',pos:.5,w:1.2},{wall:'N',pos:.5,w:1.6}],330,'Nov 14')];
 
-/* Inspiration pool: ~240 deterministic sample spaces from other people, so the feed keeps going */
-const COMMUNITY=(()=>{let seed=7;const r=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};const pick=a=>a[Math.floor(r()*a.length)];
- const ROOMS=['reading nook','galley kitchen','garden room','tea room','sky lounge','listening bar','glass porch','workshop','breakfast bay','attic study','record shop','studio loft','wine cellar','bath house','map room','sun room','dining hall','gallery room','music room','corner office','kids’ den','guest suite','bakery counter','noodle bar','bookshop','pottery studio','chapel','courtroom','reading room','pool hall'];
- const CORR=['arcade','cloister walk','stair landing','gallery hall','service passage','loggia','colonnade','enfilade','breezeway','long hall'];
- const THR=['vestibule','mud room','porch','foyer','gatehouse','airlock','genkan','courtyard entry','porte-cochère','lobby niche'];
- const ADJ=['Quiet','Sunlit','Narrow','Tall','Low','Corner','Hidden','Vaulted','Timber','Tiled','Whitewashed','Brick','Concrete','Velvet','Garden','North-light','Rooftop','Basement','Old','Round-window'];
- const PL=['Seoul','Oslo','Mexico City','Tokyo','Milan','Chicago','Boston','Hudson, NY','Marfa, TX','Porto','Berlin','Montreal','Kyoto','Lisbon','Copenhagen','Brooklyn, NY','Paris','London','Barcelona','Melbourne','Taipei','Charleston, SC','Santa Fe, NM','Vienna'];
- const out=[];for(let i=0;i<240;i++){const t=r(),tag=t<.7?'room':t<.85?'corridor':'threshold';let a,b,h;
-  if(tag==='corridor'){a=1.1+r()*1.4;b=5+r()*9;h=2.5+r()*2}else if(tag==='threshold'){a=1.6+r()*1.6;b=a+r()*2;h=2.4+r()*1.4}else{a=2.4+r()*5;b=a*(1+r()*1.1);b=Math.min(b,15);h=r()<.06?5.5+r()*3:2.4+r()*2.2}
-  const swap=r()<.5,w=swap?b:a,d=swap?a:b,base=tag==='room'?pick(ROOMS):tag==='corridor'?pick(CORR):pick(THR);
-  const doors=[{wall:pick(['N','E','S','W']),pos:.25+r()*.5,w:.8+r()*.6}];if(r()<.45)doors.push({wall:pick(['N','E','S','W']),pos:.2+r()*.6,w:.8+r()*.4});
-  out.push({id:'c'+i,name:pick(ADJ)+' '+base,place:pick(PL),project:null,tag,w:+w.toFixed(1),d:+d.toFixed(1),h:+h.toFixed(1),doors,hue:Math.floor(r()*360),saved:'',by:'community'})}
- return out})();
+/* No generated community pool any more: the feed is the real places plus scanned rooms. */
+const COMMUNITY=[];
 
-
-/* Highlights: keywords spoken during the scan, kept with the record */
-const KW={s1:['morning sun','window counter','terrazzo floor','buzzy','tall ceiling'],s2:['long bar','dim and warm','dark timber','marble counter','lively'],
- s3:['courtyard view','gravel threshold','dappled light','quiet','timber screen'],s4:['banquette','low ceiling','intimate','candlelight','plaster walls'],
- s5:['glass display','narrow','warm light','tile floor','smells of butter'],s6:['sunken seating','north light','wool rug','calm','oak floor'],
- s7:['built-in shelves','library ladder','oak floor','quiet','reading light'],s8:['art wall','long view','white plaster','gallery light','echoey'],
- s9:['bay window','soft light','carpet','calm','walk-in closet'],s10:['double height','skylight','stone floor','generous','echoey'],
- s11:['fireplace','timber beams','cozy','wool throws','low light'],s12:['velvet walls','dim and warm','brass details','intimate','arched doorway']};
-SPACES.forEach(s=>s.keywords=KW[s.id]||[]);
-(()=>{let seed=91;const r=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296},pick=a=>a[Math.floor(r()*a.length)];
- const LW=['morning sun','afternoon sun','dim and warm','candlelight','golden light'],LC=['north light','skylight','soft daylight','clerestory light','even light'],LN=['dappled light','reading light','gallery light','soft light'];
- const MAT=['oak floor','terrazzo floor','exposed brick','plaster walls','polished concrete','tile floor','timber beams','stone floor','marble counter','linen curtains','velvet seating','cork walls','brass details','limewash walls'];
- const BIG=['airy','generous','echoey','lively','grand'],SMALL=['intimate','cozy','quiet','calm','tucked away'];
- const FEAT={reading:'built-in shelves',kitchen:'open shelving',garden:'view to garden',tea:'low table',lounge:'deep sofas',bar:'long bar',porch:'big windows',workshop:'workbench',bay:'bay window',study:'desk by window',shop:'display wall',loft:'high ceiling',cellar:'vaulted ceiling',bath:'tiled bath',map:'map table',sun:'big windows',dining:'long table',gallery:'art wall',music:'piano',office:'corner windows',den:'deep sofas',suite:'bay window',counter:'window counter',noodle:'counter seating',bookshop:'built-in shelves',pottery:'workbench',chapel:'arched windows',courtroom:'wood paneling',pool:'pendant lights',arcade:'columns',cloister:'courtyard view',landing:'stair view',hall:'long view',passage:'narrow',loggia:'open air',colonnade:'columns',enfilade:'aligned doors',breezeway:'cross breeze',vestibule:'double doors',mud:'bench and hooks',foyer:'coat nook',gatehouse:'heavy door',airlock:'double doors',genkan:'step up',entry:'courtyard view',lobby:'seating niche',niche:'seating niche','porte':'canopy'};
- COMMUNITY.forEach(s=>{const set=new Set(),h=s.hue,[L,S]=[Math.max(s.w,s.d),Math.min(s.w,s.d)];
-  set.add(pick(h<=55||h>=320?LW:h>=165&&h<=265?LC:LN));const m1=pick(MAT);set.add(m1);if(r()<.6){const m2=pick(MAT.filter(m=>!(m1.includes('floor')&&m.includes('floor'))&&!(m1.includes('walls')&&m.includes('walls'))));set.add(m2)}
-  set.add(pick(s.h/S>.9||L*S>45?BIG:SMALL));const k=Object.keys(FEAT).find(k=>s.name.toLowerCase().includes(k));if(k)set.add(FEAT[k]);
-  if(s.h>4.5)set.add('high ceiling');else if(s.h<2.6)set.add('low ceiling');s.keywords=[...set].slice(0,5)})})();
 const $=(s,el=document)=>el.querySelector(s);
 const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const proj=id=>PROJECTS.find(p=>p.id===id);
@@ -67,6 +53,8 @@ const m=len;
 const area=s=>UNIT==='m'?(s.w*s.d).toFixed(1)+' m²':Math.round(s.w*s.d*FT*FT).toLocaleString()+' ft²';
 const totalArea=ss=>{const a=ss.reduce((x,s)=>x+s.w*s.d,0);return UNIT==='m'?a.toFixed(0)+' m²':Math.round(a*FT*FT).toLocaleString()+' ft²'};
 const volume=s=>UNIT==='m'?(s.w*s.d*s.h).toFixed(0)+' m³':Math.round(s.w*s.d*s.h*FT**3).toLocaleString()+' ft³';
+/* Scanned rooms are uncalibrated: mark their measurements as estimates. Sample rooms are unchanged. */
+const est=s=>s.estimated||(s.scanned&&s.calibrated===false)?' <span class="est" style="color:var(--muted);font-size:.85em" title="Estimated from the 3D scan, not measured">est.</span>':'';
 const dims=s=>UNIT==='m'?`${s.w.toFixed(1)} × ${s.d.toFixed(1)} × ${s.h.toFixed(1)} m`:`${len(s.w)} × ${len(s.d)} × ${len(s.h)}`;
 const unitWord=()=>UNIT==='m'?'metres':'feet and inches';
 
@@ -133,7 +121,7 @@ function feed(box,items,card,{batch=8}={}){let list=items,n=0,gen=0,busy=false;
 const lazy=feed;
 
 /* Placeholder "photo": a lit room in the space's hue (stands in for the scan snapshot) */
-function photo(s){const h=s.hue;return `background:linear-gradient(to top,hsl(${h} 18% 26% / .55) 0 26%,transparent 26.5%),radial-gradient(70% 55% at 72% 22%,hsl(${h} 70% 94% / .95),transparent 60%),linear-gradient(165deg,hsl(${h} 32% 74%),hsl(${(h+18)%360} 26% 36%))`}
+function photo(s){const h=s.hue;if(s.thumb)return `background:url('${encodeURI(s.thumb).replace(/'/g,'%27')}') center/cover no-repeat,hsl(${h} 20% 50%)`;return `background:linear-gradient(to top,hsl(${h} 18% 26% / .55) 0 26%,transparent 26.5%),radial-gradient(70% 55% at 72% 22%,hsl(${h} 70% 94% / .95),transparent 60%),linear-gradient(165deg,hsl(${h} 32% 74%),hsl(${(h+18)%360} 26% 36%))`}
 
 /* 2D plan from the record: walls, door gaps, door swings, optional dimensions */
 function plan(s,{size=120,pad=10,sw=1.5,dims=false}={}){
