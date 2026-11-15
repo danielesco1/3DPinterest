@@ -30,7 +30,8 @@ function loadPlaceTags(){
 /* Scanned rooms: the hero image becomes the 3D splat viewer, and keywords with an anchor fly the camera there. */
 const anchorFor=(s,k)=>(s.anchors||[]).find(a=>Array.isArray(a.position)&&a.position.length===3&&a.position.every(Number.isFinite)&&(a.tags||[]).includes(k));
 function kwItem(s,k){const a=s.scanned&&anchorFor(s,k);
- return a?`<li role="button" tabindex="0" data-fly="${a.position.join(',')}" title="Show in 3D" style="cursor:pointer">${esc(k)} ↗</li>`:`<li>${esc(k)}</li>`}
+ const cam=a&&Array.isArray(a.camera)&&a.camera.length===3&&a.camera.every(Number.isFinite)?` data-cam="${a.camera.join(',')}"`:'';
+ return a?`<li role="button" tabindex="0" data-fly="${a.position.join(',')}"${cam} title="Show in 3D" style="cursor:pointer">${esc(k)} ↗</li>`:`<li>${esc(k)}</li>`}
 // Reject executable URLs while retaining same-origin and external HTTPS viewers.
 function viewerURL(s){
  const fallback='viewer.html?room='+encodeURIComponent(s.id);
@@ -45,7 +46,9 @@ function heroPane(s){if(!s.scanned)return `<div class="hero" style="${photo(s)}"
 function flyFrom(el){const f=document.getElementById('scanview');if(!f||!f.contentWindow)return;
  const position=el.dataset.fly.split(',').map(Number);
  if(position.length!==3||!position.every(Number.isFinite))return;
- f.contentWindow.postMessage({type:'fly',position},new URL(f.src,location.href).origin)}
+ const cam=el.dataset.cam?el.dataset.cam.split(',').map(Number):null;
+ const msg=cam&&cam.length===3&&cam.every(Number.isFinite)?{type:'fly',position,camera:cam}:{type:'fly',position};
+ f.contentWindow.postMessage(msg,new URL(f.src,location.href).origin)}
 document.addEventListener('click',e=>{const el=e.target.closest('[data-fly]');if(el)flyFrom(el)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const el=e.target.closest&&e.target.closest('[data-fly]');if(el){e.preventDefault();flyFrom(el)}}});
 
