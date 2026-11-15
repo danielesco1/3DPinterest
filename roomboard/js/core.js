@@ -16,7 +16,6 @@ const SPACES=[
  PL_('s4','Hungry Ghost Coffee','hungry-ghost-coffee.jpg','cafe',3.6,2.8,2.6,[{wall:'E',pos:.3,w:.9}],18,'Nov 6'),
  PL_('s5','Pi Bakerie','pi-bakerie.jpg','cafe',1.6,7.2,3.2,[{wall:'N',pos:.5,w:1.0},{wall:'S',pos:.5,w:1.0}],40,'Nov 3'),
  PL_('s6','120 W Broadway','120-w-broadway.jpg','living',5.8,5.2,3.0,[{wall:'W',pos:.2,w:1.0}],200,'Nov 11'),
- Object.assign(PL_('s7','McNally Jackson Books Seaport','mcnally-jackson-books-seaport.jpg','living',7.0,4.4,3.4,[{wall:'S',pos:.15,w:.9},{wall:'E',pos:.6,w:1.2}],215,'Nov 9'),{tagsFolder:'mcnally-jackson-books-seaport'}),
  PL_('s8','POP MART','pop-mart.jpg','living',1.4,8.5,2.8,[{wall:'N',pos:.5,w:.9},{wall:'E',pos:.7,w:.9}],190,'Nov 5'),
  PL_('s9','Sam Edelman','sam-edelman.jpg','living',4.8,5.6,2.9,[{wall:'N',pos:.8,w:.9},{wall:'W',pos:.75,w:.8}],265,'Nov 1'),
  PL_('s10','Four Seasons Hotel New York Downtown','four-seasons-hotel-new-york-downtown.jpg','lounge',12.0,9.0,7.2,[{wall:'S',pos:.5,w:2.4},{wall:'N',pos:.2,w:1.2}],140,'Nov 7'),
