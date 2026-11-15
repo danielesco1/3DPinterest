@@ -35,7 +35,9 @@ function kwItem(s,k){const a=s.scanned&&anchorFor(s,k);
 function viewerURL(s){
  const fallback='viewer.html?room='+encodeURIComponent(s.id);
  try{const url=new URL(s.viewer||fallback,location.href);
-  return ['http:','https:'].includes(url.protocol)?url.href:new URL(fallback,location.href).href;
+  if(!['http:','https:'].includes(url.protocol))return new URL(fallback,location.href).href;
+  if(s.viewer)url.searchParams.set('embed','1'); // shared viewer: hide its panels inside Roomboard
+  return url.href;
  }catch{return new URL(fallback,location.href).href}
 }
 function heroPane(s){if(!s.scanned)return `<div class="hero" style="${photo(s)}"></div>`;

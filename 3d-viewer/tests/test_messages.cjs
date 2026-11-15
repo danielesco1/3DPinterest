@@ -21,7 +21,7 @@ const iframe={src:'https://storage.googleapis.com/roomboard-demo-rooms/scenes/fi
 const room={URL,location:{href:'https://danielesco1.github.io/3DPinterest/roomboard/',origin:'https://danielesco1.github.io'},document:{addEventListener(){},getElementById(){return iframe}}};
 vm.createContext(room);vm.runInContext(roomSource,room);
 assert.equal(room.viewerURL({id:'hiroto-space'}),'https://danielesco1.github.io/3DPinterest/roomboard/viewer.html?room=hiroto-space');
-assert.equal(room.viewerURL({id:'h',viewer:iframe.src}),iframe.src);
+assert.equal(room.viewerURL({id:'h',viewer:iframe.src}),iframe.src+'?embed=1'); // shared viewer opens in embed mode
 assert.match(room.viewerURL({id:'h',viewer:'javascript:alert(1)'}),/viewer.html\?room=h$/);
 room.flyFrom({dataset:{fly:'1,2,3'}});
 assert.equal(calls.length,1);assert.equal(calls[0][1],'https://storage.googleapis.com');
