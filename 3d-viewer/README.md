@@ -41,3 +41,58 @@ Validation: Python adapter tests, JavaScript syntax checks, both space routes an
 Requires Python 3.10+ and a WebGL2-capable Chrome browser. No npm install or API keys needed for viewing. Clone the repository and checkout `main`. Restore the private assets into the two paths in the manifest, then run the commands above. Git contains code only: the reconstruction SPZ, preview frames, camera data, geometry and SVGs must be obtained separately from the authorized Drive share. Downloading a single SPZ is insufficient for CAD/camera comparisons. A missing asset produces a 404, not a new reconstruction request.
 
 Run `python3 3d-viewer/test_shared.py` for adapter tests. The existing-asset test skips if private assets have not been restored.
+
+## Static Roomboard deployment
+
+Work from the integration branch, then merge the reviewed code into `main` for GitHub Pages. No bundler or npm is used. `export_static.py` shares the server's adapter and path aliases; it exports only allowlisted files, never `.env` or the whole `work/` tree.
+
+Restore these private files from each space's Drive export (retain original coordinates):
+
+| Local destination | Required contents |
+| --- | --- |
+| `3d-viewer/work/pose-viewer/` | `viewer-data.json`, `reconstruction.spz`, `shells.json`, `openings.json`, `room-vector-exports/room-plan.svg`, `room-vector-exports/room-volume.svg` |
+| `3d-viewer/work/hotel-advanced-viewer/` | `viewer-data.json`, `reconstruction.spz`, `core-envelope.json`, `core-plan.svg`, `core-volume.svg`, `partial-sample-points.json`, `provisional-outlines.json` |
+| Both folders' `vendor/` | `OrbitControls.js`, `Pass.js`, `spark.module.js`, `three.core.js`, `three.module.js` (or prepare pinned bundles with `prepare_vendor.py`) |
+
+Camera thumbnails must be embedded data URLs in `viewer-data.json`, as in the existing captures. Hotel diagnostic `partial-plan.png` and `response.json` are optional. First-room envelope and empty diagnostic placeholders are generated using the existing adapter. Missing required files fail before any prior export is replaced.
+
+```sh
+python3 3d-viewer/export_static.py --scene all
+python3 3d-viewer/test_static.py
+node 3d-viewer/tests/test_messages.cjs
+# Preview the exported scenes without serve.py:
+python3 -m http.server 8000 --directory 3d-viewer/dist
+```
+
+Upload only the validated generated scene folders. These commands publish the scene assets to the existing public bucket; they do not alter bucket IAM or CORS. Run with an authorized signed-in gcloud account:
+
+```sh
+for scene in first-room hotel; do
+  for ext in html js cjs json svg spz png; do
+    case "$ext" in
+      html) mime=text/html;;
+      js|cjs) mime=application/javascript;;
+      json) mime=application/json;;
+      svg) mime=image/svg+xml;;
+      spz) mime=application/octet-stream;;
+      png) mime=image/png;;
+    esac
+    find "3d-viewer/dist/$scene" -type f -name "*.$ext" -print0 |
+      while IFS= read -r -d '' file; do
+        relative="${file#3d-viewer/dist/$scene/}"
+        gcloud storage cp "$file" "gs://roomboard-demo-rooms/scenes/$scene/$relative" \
+          --cache-control=no-cache --content-type="$mime"
+      done
+  done
+ done
+```
+
+In the existing `rooms/hiroto-space/space.json`, preserve every other field and add:
+
+```json
+"viewer": "https://storage.googleapis.com/roomboard-demo-rooms/scenes/first-room/index.html"
+```
+
+Upload the edited metadata with `gcloud storage cp space.json gs://roomboard-demo-rooms/rooms/hiroto-space/space.json --cache-control=no-cache --content-type=application/json`. Rooms without `viewer` retain the old renderer. Highlight messages target the iframe's actual origin. The advanced viewer accepts finite native-coordinate `fly` messages only from its parent at its own origin or `https://danielesco1.github.io`. A localhost Roomboard parent cannot control a GCS-hosted iframe; use a same-origin local static viewer for local testing.
+
+Verify after deployment: open Hiroto on GitHub Pages, click `window-view`, confirm smooth camera motion, inspect browser errors, switch to Hotel and back, exercise timeline, capture, crop and section controls. Export success and unit tests alone do not establish live deployment success. Dimensions remain **uncalibrated estimates**.
