@@ -22,7 +22,15 @@
     "why": "CAD floor sample view was too close to read; existing view kept"
   },
   "atrium-lighting": {
-    "keep": true,
-    "why": "existing camera-pose view looks better than the CAD stair proxy"
+    "drop": true,
+    "why": "trimmed to the three strongest bookstore tags for the demo"
+  },
+  "lighting": {
+    "drop": true,
+    "why": "trimmed to the three strongest bookstore tags for the demo"
+  },
+  "overall": {
+    "drop": true,
+    "why": "trimmed to the three strongest bookstore tags for the demo"
   }
 }
