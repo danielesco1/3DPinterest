@@ -1,12 +1,14 @@
 /* ---------- Scanned rooms: read rooms/index.json and add each room to SPACES before the app boots.
    If the files are missing or unreadable, the sample rooms stay exactly as they were. ---------- */
 const ROOMS_URL='https://storage.googleapis.com/roomboard-demo-rooms/rooms/';
+/* Google's edge cache can hold an old copy of a public file for up to an hour; a unique query skips it. */
+const fresh=u=>u+(u.includes('?')?'&':'?')+'v='+Date.now();
 function loadRooms(){
- return fetch(ROOMS_URL+'index.json',{cache:'no-cache'})
+ return fetch(fresh(ROOMS_URL+'index.json'),{cache:'no-store'})
   .then(r=>{if(!r.ok)throw new Error('index '+r.status);return r.json()})
   .then(idx=>Promise.all((idx.rooms||[]).map(e=>Promise.all([
-    fetch(ROOMS_URL+e.folder+'/space.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).catch(()=>null),
-    fetch(ROOMS_URL+e.folder+'/tags.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).catch(()=>null)])
+    fetch(fresh(ROOMS_URL+e.folder+'/space.json'),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
+    fetch(fresh(ROOMS_URL+e.folder+'/tags.json'),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)])
    .then(([sp,tg])=>sp&&{...sp,anchors:(tg&&tg.anchors)||[]}))))
   .then(list=>{list.filter(Boolean).forEach(s=>{
     if(SPACES.some(x=>x.id===s.id))return;
@@ -20,7 +22,7 @@ function loadRooms(){
 }
 /* Photo-only places with narration: keywords come from rooms/<tagsFolder>/tags.json (same format as scans). */
 function loadPlaceTags(){
- return Promise.all(SPACES.filter(s=>s.tagsFolder).map(s=>fetch(ROOMS_URL+s.tagsFolder+'/tags.json',{cache:'no-cache'})
+ return Promise.all(SPACES.filter(s=>s.tagsFolder).map(s=>fetch(fresh(ROOMS_URL+s.tagsFolder+'/tags.json'),{cache:'no-store'})
   .then(r=>r.ok?r.json():null).then(tg=>{if(!tg)return;const k=[];(tg.anchors||[]).forEach(a=>(a.tags||[]).forEach(x=>{if(!k.includes(x))k.push(x)}));
    s.keywords=k;s.anchors=tg.anchors||[]}).catch(()=>{})));
 }
@@ -33,7 +35,9 @@ function kwItem(s,k){const a=s.scanned&&anchorFor(s,k);
 function viewerURL(s){
  const fallback='viewer.html?room='+encodeURIComponent(s.id);
  try{const url=new URL(s.viewer||fallback,location.href);
-  return ['http:','https:'].includes(url.protocol)?url.href:new URL(fallback,location.href).href;
+  if(!['http:','https:'].includes(url.protocol))return new URL(fallback,location.href).href;
+  if(s.viewer)url.searchParams.set('embed','1'); // shared viewer: hide its panels inside Roomboard
+  return url.href;
  }catch{return new URL(fallback,location.href).href}
 }
 function heroPane(s){if(!s.scanned)return `<div class="hero" style="${photo(s)}"></div>`;
