@@ -1,6 +1,6 @@
 /* ---------- Scanned rooms: read rooms/index.json and add each room to SPACES before the app boots.
    If the files are missing or unreadable, the sample rooms stay exactly as they were. ---------- */
-const ROOMS_URL='rooms/';
+const ROOMS_URL='https://storage.googleapis.com/roomboard-demo-rooms/rooms/';
 function loadRooms(){
  return fetch(ROOMS_URL+'index.json',{cache:'no-cache'})
   .then(r=>{if(!r.ok)throw new Error('index '+r.status);return r.json()})
